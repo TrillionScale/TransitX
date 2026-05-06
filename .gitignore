@@ -1,0 +1,30 @@
+# deps
+node_modules/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# expo
+.expo/
+dist/
+web-build/
+
+# native
+ios/Pods/
+ios/build/
+android/build/
+android/app/build/
+android/.gradle/
+*.ipa
+*.apk
+
+# system
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# eas
+.easignore
