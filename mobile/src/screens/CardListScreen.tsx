@@ -3,11 +3,12 @@ import { ActivityIndicator, Dimensions, StyleSheet, Text, View } from 'react-nat
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Carousel from 'react-native-reanimated-carousel';
-import { Settings } from 'lucide-react-native';
+import { Moon, Settings, Sun } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 
 import { CardItem } from '../components/CardItem';
 import { useCards } from '../state/useCards';
+import { useThemeMode } from '../state/useThemeMode';
 import { RootStackParamList } from '../navigation';
 import { colors, radius, space } from '../theme';
 import { Screen, ScreenHeader, IconButton } from '../components/ui';
@@ -25,6 +26,7 @@ export const CardListScreen: React.FC = () => {
   const { cards, loading, error } = useCards();
   const [activeIndex, setActiveIndex] = useState(0);
   const navigation = useNavigation<Nav>();
+  const { mode, toggle } = useThemeMode();
 
   return (
     <Screen>
@@ -33,6 +35,9 @@ export const CardListScreen: React.FC = () => {
         title="Your Cards"
         left={
           <IconButton icon={Settings} onPress={() => navigation.navigate('Workspace', {})} />
+        }
+        right={
+          <IconButton icon={mode === 'dark' ? Sun : Moon} onPress={toggle} />
         }
       />
 
@@ -84,17 +89,46 @@ export const CardListScreen: React.FC = () => {
               <View pointerEvents="none" style={styles.indicatorBorder} />
               <View pointerEvents="none" style={styles.indicatorHair} />
               <View style={styles.indicatorRow}>
-                <Text style={styles.counterText}>
-                  <Text style={styles.counterNum}>{activeIndex + 1}</Text>
-                  <Text style={styles.counterDivider}>  /  </Text>
+                <Text
+                  style={[
+                    styles.counterText,
+                    mode === 'dark' && { color: 'rgba(255,255,255,0.7)' },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.counterNum,
+                      mode === 'dark' && { color: '#FFFFFF' },
+                    ]}
+                  >
+                    {activeIndex + 1}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.counterDivider,
+                      mode === 'dark' && { color: 'rgba(255,255,255,0.4)' },
+                    ]}
+                  >
+                    {'  /  '}
+                  </Text>
                   <Text>{cards.length}</Text>
                 </Text>
-                <View style={styles.divider} />
+                <View
+                  style={[
+                    styles.divider,
+                    mode === 'dark' && { backgroundColor: 'rgba(255,255,255,0.3)' },
+                  ]}
+                />
                 <View style={styles.dots}>
                   {cards.map((c, i) => (
                     <View
                       key={c.id}
-                      style={[styles.dot, i === activeIndex && styles.dotActive]}
+                      style={[
+                        styles.dot,
+                        mode === 'dark' && { backgroundColor: 'rgba(255,255,255,0.35)' },
+                        i === activeIndex && styles.dotActive,
+                        i === activeIndex && mode === 'dark' && { backgroundColor: '#FFFFFF' },
+                      ]}
                     />
                   ))}
                 </View>

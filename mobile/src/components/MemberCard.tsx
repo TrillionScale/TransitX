@@ -135,11 +135,11 @@ const styles = StyleSheet.create({
   },
   surface: {
     borderRadius: radius.xl,
-    height: 240,
+    aspectRatio: 1,
     overflow: 'hidden',
   },
   surfaceLarge: {
-    height: 320,
+    aspectRatio: 1,
   },
   edge: { position: 'absolute' },
   hairline: {

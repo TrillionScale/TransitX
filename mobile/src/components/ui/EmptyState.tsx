@@ -1,7 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from './Button';
-import { colors, radius, space } from '../../theme';
+import { radius, space } from '../../theme';
+import { useDynamicColors } from '../../state/useThemeMode';
 
 type IconCmp = React.ComponentType<{ size: number; color: string; strokeWidth: number }>;
 
@@ -12,20 +13,23 @@ type Props = {
   cta?: { label: string; onPress: () => void; icon?: IconCmp };
 };
 
-export const EmptyState: React.FC<Props> = ({ icon: Icon, title, message, cta }) => (
-  <View style={styles.wrap}>
-    <View style={styles.iconCircle}>
-      <Icon size={26} color={colors.textOnLightMuted} strokeWidth={1.6} />
-    </View>
-    <Text style={styles.title}>{title}</Text>
-    {message && <Text style={styles.message}>{message}</Text>}
-    {cta && (
-      <View style={styles.cta}>
-        <Button label={cta.label} icon={cta.icon} onPress={cta.onPress} />
+export const EmptyState: React.FC<Props> = ({ icon: Icon, title, message, cta }) => {
+  const dyn = useDynamicColors();
+  return (
+    <View style={styles.wrap}>
+      <View style={styles.iconCircle}>
+        <Icon size={26} color={dyn.textOnLightMuted} strokeWidth={1.6} />
       </View>
-    )}
-  </View>
-);
+      <Text style={[styles.title, { color: dyn.textOnLight }]}>{title}</Text>
+      {message && <Text style={[styles.message, { color: dyn.textOnLightMuted }]}>{message}</Text>}
+      {cta && (
+        <View style={styles.cta}>
+          <Button label={cta.label} icon={cta.icon} onPress={cta.onPress} />
+        </View>
+      )}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   wrap: {
@@ -45,7 +49,6 @@ const styles = StyleSheet.create({
     marginBottom: space.lg,
   },
   title: {
-    color: colors.textOnLight,
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: -0.3,
@@ -53,7 +56,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   message: {
-    color: colors.textOnLightMuted,
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 19,

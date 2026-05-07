@@ -20,7 +20,10 @@
         "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
-        "com.apple.developer.nfc.readersession.formats": ["NDEF", "TAG"]
+        "com.apple.developer.nfc.readersession.formats": [
+          "NDEF",
+          "TAG"
+        ]
       }
     },
     "android": {
@@ -31,7 +34,9 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": ["android.permission.NFC"]
+      "permissions": [
+        "android.permission.NFC"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -45,7 +50,8 @@
           "systemCodes": [],
           "includeNdefEntitlement": true
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

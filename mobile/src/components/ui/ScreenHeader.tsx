@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { radius, space } from '../../theme';
+import { useThemeMode } from '../../state/useThemeMode';
 
 type Props = {
   title?: string;
@@ -14,39 +15,44 @@ type Props = {
  * 헤더 알약 캡슐 — 작은 캡슐에 맞춘 가벼운 글래스 (RadialGradient X).
  * BlurView + 옅은 흰 tint + 미세 hairline border.
  */
-export const ScreenHeader: React.FC<Props> = ({ title, kicker, left, right }) => (
-  <View style={styles.header}>
-    <View style={styles.side}>{left}</View>
+export const ScreenHeader: React.FC<Props> = ({ title, kicker, left, right }) => {
+  const { mode } = useThemeMode();
+  const isDark = mode === 'dark';
+  const titleColor = isDark ? '#FFFFFF' : '#0A0E1A';
+  const kickerColor = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(20,24,34,0.55)';
+  return (
+    <View style={styles.header}>
+      <View style={styles.side}>{left}</View>
 
-    {(title || kicker) && (
-      <View style={styles.centerWrap}>
-        <View style={styles.shadow}>
-          <View style={styles.capsule}>
-            <BlurView
-              intensity={30}
-              tint="light"
-              style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]}
-            />
-            <View pointerEvents="none" style={styles.tint} />
-            <View pointerEvents="none" style={styles.border} />
-            {/* 위쪽 hairline */}
-            <View pointerEvents="none" style={styles.hairline} />
-            <View style={styles.content}>
-              {kicker && <Text style={styles.kicker}>{kicker}</Text>}
-              {title && (
-                <Text style={styles.title} numberOfLines={1}>
-                  {title}
-                </Text>
-              )}
+      {(title || kicker) && (
+        <View style={styles.centerWrap}>
+          <View style={styles.shadow}>
+            <View style={styles.capsule}>
+              <BlurView
+                intensity={30}
+                tint="light"
+                style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]}
+              />
+              <View pointerEvents="none" style={styles.tint} />
+              <View pointerEvents="none" style={styles.border} />
+              <View pointerEvents="none" style={styles.hairline} />
+              <View style={styles.content}>
+                {kicker && <Text style={[styles.kicker, { color: kickerColor }]}>{kicker}</Text>}
+                {title && (
+                  <Text style={[styles.title, { color: titleColor }]} numberOfLines={1}>
+                    {title}
+                  </Text>
+                )}
+              </View>
             </View>
           </View>
         </View>
-      </View>
-    )}
+      )}
 
-    <View style={[styles.side, styles.sideRight]}>{right}</View>
-  </View>
-);
+      <View style={[styles.side, styles.sideRight]}>{right}</View>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   header: {

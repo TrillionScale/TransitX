@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -13,7 +12,9 @@ import {
 import { Check, X } from 'lucide-react-native';
 import { api } from '../data/api';
 import { Group } from '../types';
-import { colors, font, radius, space } from '../theme';
+import { colors, radius, space } from '../theme';
+import { useDynamicColors } from '../state/useThemeMode';
+import { BackgroundCanvas, Button, IconButton } from './ui';
 
 type Props = {
   visible: boolean;
@@ -28,6 +29,7 @@ export const CreateGroupModal: React.FC<Props> = ({ visible, onClose, onCreated 
   const [usd, setUsd] = useState('100');
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(0);
+  const dyn = useDynamicColors();
 
   // 모달이 닫힐 때 상태 초기화
   useEffect(() => {
@@ -77,42 +79,41 @@ export const CreateGroupModal: React.FC<Props> = ({ visible, onClose, onCreated 
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        <BackgroundCanvas />
         <View style={styles.header}>
-          <Pressable
-            hitSlop={12}
-            style={styles.closeBtn}
-            onPress={onClose}
-            disabled={submitting}
-          >
-            <X size={20} color={colors.text} strokeWidth={1.8} />
-          </Pressable>
-          <Text style={styles.title}>새 그룹 카드</Text>
-          <View style={styles.closeBtn} />
+          <IconButton icon={X} onPress={submitting ? undefined : onClose} />
+          <Text style={[styles.title, { color: dyn.textOnLight }]}>새 그룹 카드</Text>
+          <View style={{ width: 40, height: 40 }} />
         </View>
 
         {!submitting ? (
           <View style={styles.body}>
-            <Text style={styles.label}>그룹 이름</Text>
+            <Text style={[styles.label, { color: dyn.textOnLightMuted }]}>그룹 이름</Text>
             <TextInput
               value={name}
               onChangeText={setName}
               placeholder="예: Acme Corp 출장 카드"
-              placeholderTextColor={colors.textFaint}
-              style={styles.input}
+              placeholderTextColor={dyn.textOnLightFaint}
+              style={[
+                styles.input,
+                { color: dyn.textOnLight, borderBottomColor: dyn.textOnLightFaint },
+              ]}
               autoFocus
             />
 
-            <Text style={[styles.label, { marginTop: space.lg }]}>초기 충전 (USD)</Text>
-            <View style={styles.usdRow}>
-              <Text style={styles.usdSign}>$</Text>
+            <Text style={[styles.label, { color: dyn.textOnLightMuted, marginTop: space.lg }]}>
+              초기 충전 (USD)
+            </Text>
+            <View style={[styles.usdRow, { borderBottomColor: dyn.textOnLightFaint }]}>
+              <Text style={[styles.usdSign, { color: dyn.textOnLight }]}>$</Text>
               <TextInput
                 value={usd}
                 onChangeText={setUsd}
                 keyboardType="decimal-pad"
-                style={styles.usdInput}
+                style={[styles.usdInput, { color: dyn.textOnLight }]}
               />
             </View>
-            <Text style={styles.hint}>
+            <Text style={[styles.hint, { color: dyn.textOnLightMuted }]}>
               내 지갑에서 그룹 풀로 송금되며, 멤버 누구나 결제에 사용할 수 있습니다.
             </Text>
           </View>
@@ -138,7 +139,8 @@ export const CreateGroupModal: React.FC<Props> = ({ visible, onClose, onCreated 
                 <Text
                   style={[
                     styles.stepLabel,
-                    i <= step && styles.stepLabelActive,
+                    { color: dyn.textOnLightFaint },
+                    i <= step && [styles.stepLabelActive, { color: dyn.textOnLight }],
                   ]}
                 >
                   {label}
@@ -150,17 +152,14 @@ export const CreateGroupModal: React.FC<Props> = ({ visible, onClose, onCreated 
 
         {!submitting && (
           <View style={styles.footer}>
-            <Pressable
+            <Button
+              label="그룹 만들기"
+              variant="success"
+              fullWidth
+              size="lg"
               onPress={handleCreate}
               disabled={!name.trim() || !usd}
-              style={({ pressed }) => [
-                styles.submitBtn,
-                (!name.trim() || !usd) && styles.submitDisabled,
-                pressed && { opacity: 0.85 },
-              ]}
-            >
-              <Text style={styles.submitText}>그룹 만들기</Text>
-            </Pressable>
+            />
           </View>
         )}
       </KeyboardAvoidingView>
@@ -171,7 +170,6 @@ export const CreateGroupModal: React.FC<Props> = ({ visible, onClose, onCreated 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bgDeep,
   },
   header: {
     flexDirection: 'row',
@@ -181,16 +179,7 @@ const styles = StyleSheet.create({
     paddingTop: space.md,
     paddingBottom: space.lg,
   },
-  closeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   title: {
-    color: colors.text,
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: -0.3,
@@ -281,20 +270,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
     paddingBottom: space.xl,
     paddingTop: space.md,
-  },
-  submitBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: space.lg,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-  },
-  submitDisabled: {
-    backgroundColor: colors.borderStrong,
-  },
-  submitText: {
-    color: colors.textInverse,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: -0.2,
   },
 });

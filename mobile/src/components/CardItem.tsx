@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Nfc } from 'lucide-react-native';
 import { Card } from '../types';
 import { accentForCard, colors, font, radius, shadow, space } from '../theme';
@@ -68,6 +69,9 @@ export const CardItem: React.FC<Props> = ({ card, onPress, variant = 'list' }) =
           { backgroundColor: 'transparent' },
         ]}
       >
+        {/* 카드 안쪽 블러 — 뒷 배경/워드마크가 살짝 흐려져 보임 */}
+        <BlurView intensity={18} tint="light" style={StyleSheet.absoluteFill} pointerEvents="none" />
+
         {/* Inner glow stack — 가장자리에서만 빛, 안쪽은 빠르게 투명 */}
         {(() => {
           const edge = isPortrait ? 70 : 40;

@@ -15,7 +15,8 @@ import { useCards } from '../state/useCards';
 import { useGroup } from '../state/useGroup';
 import { Card } from '../types';
 import { colors, radius, space } from '../theme';
-import { Glass, EmptyState } from './ui';
+import { useDynamicColors } from '../state/useThemeMode';
+import { DarkGlass, EmptyState } from './ui';
 
 type Props = {
   onSelect: (groupId: string) => void;
@@ -24,6 +25,7 @@ type Props = {
 export const GroupsPanel: React.FC<Props> = ({ onSelect }) => {
   const { cards, loading } = useCards();
   const [showCreate, setShowCreate] = useState(false);
+  const dyn = useDynamicColors();
 
   const groups = cards.filter((c) => c.kind === 'group');
 
@@ -39,8 +41,8 @@ export const GroupsPanel: React.FC<Props> = ({ onSelect }) => {
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>그룹 관리</Text>
-        <Text style={styles.sub}>
+        <Text style={[styles.title, { color: dyn.textOnLight }]}>그룹 관리</Text>
+        <Text style={[styles.sub, { color: dyn.textOnLightMuted }]}>
           {groups.length === 0
             ? '아직 그룹이 없습니다'
             : `내가 관리하는 그룹 ${groups.length}개`}
@@ -68,8 +70,10 @@ export const GroupsPanel: React.FC<Props> = ({ onSelect }) => {
               <Plus size={18} color={colors.textMuted} strokeWidth={2} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.addTitle}>새 그룹 만들기</Text>
-              <Text style={styles.addSub}>회사·가족 등 공용 결제 카드</Text>
+              <Text style={[styles.addTitle, { color: dyn.textOnLight }]}>새 그룹 만들기</Text>
+              <Text style={[styles.addSub, { color: dyn.textOnLightMuted }]}>
+                회사·가족 등 공용 결제 카드
+              </Text>
             </View>
           </Pressable>
         </>
@@ -95,7 +99,7 @@ const GroupSummaryCard: React.FC<{ card: Card; onPress: () => void }> = ({ card,
   return (
     <View style={styles.summaryWrap}>
       <CardItem card={card} onPress={onPress} />
-      <Glass radius="md" elevated style={styles.summaryMeta}>
+      <DarkGlass radius="md" style={styles.summaryMeta}>
         <View style={styles.metaItem}>
           <Text style={styles.metaLabel}>멤버</Text>
           <Text style={styles.metaValue}>{memberCount}명</Text>
@@ -105,7 +109,7 @@ const GroupSummaryCard: React.FC<{ card: Card; onPress: () => void }> = ({ card,
           <Text style={styles.metaLabel}>활성</Text>
           <Text style={styles.metaValue}>{activeCount}명</Text>
         </View>
-      </Glass>
+      </DarkGlass>
     </View>
   );
 };
@@ -153,16 +157,16 @@ const styles = StyleSheet.create({
     gap: space.xs,
   },
   metaLabel: {
-    color: colors.textMuted,
-    fontSize: 11,
+    color: colors.textOnGlassFaint,
+    fontSize: 10,
     fontWeight: '600',
-    letterSpacing: 0.4,
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
   },
   metaValue: {
-    color: colors.text,
+    color: colors.textOnGlass,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: -0.2,
   },
   metaDivider: {

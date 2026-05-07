@@ -1,5 +1,6 @@
 export { BackgroundCanvas } from './BackgroundCanvas';
 export { Glass } from './Glass';
+export { DarkGlass } from './DarkGlass';
 export { Screen } from './Screen';
 export { ScreenHeader } from './ScreenHeader';
 export { Button } from './Button';

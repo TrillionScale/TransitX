@@ -31,7 +31,7 @@ export const Row: React.FC<Props> = ({
     <View style={styles.row}>
       {Icon && (
         <View style={styles.iconWrap}>
-          <Icon size={16} color="rgba(10,14,26,0.6)" strokeWidth={1.8} />
+          <Icon size={16} color={colors.textOnGlassFaint} strokeWidth={1.8} />
         </View>
       )}
       <Text style={styles.label}>{label}</Text>
@@ -39,7 +39,7 @@ export const Row: React.FC<Props> = ({
       {value && <Text style={styles.value}>{value}</Text>}
       {rightSlot}
       {showChevron && (
-        <ChevronRight size={16} color="rgba(10,14,26,0.4)" strokeWidth={1.8} />
+        <ChevronRight size={16} color={colors.textOnGlassDim} strokeWidth={1.8} />
       )}
     </View>
   );
@@ -62,12 +62,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    color: 'rgba(10,14,26,0.6)',
+    color: colors.textOnGlassFaint,
     fontSize: 13,
     fontWeight: '500',
   },
   value: {
-    color: '#0A0E1A',
+    color: colors.textOnGlass,
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.2,

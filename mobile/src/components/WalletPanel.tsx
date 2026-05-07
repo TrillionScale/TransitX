@@ -15,13 +15,15 @@ import { ArrowDownToLine, Copy, Share2, X } from 'lucide-react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { useWallet } from '../state/useWallet';
+import { useDynamicColors } from '../state/useThemeMode';
 import { colors, radius, space } from '../theme';
 import { formatAmount } from '../format';
-import { Glass, Button, IconButton } from './ui';
+import { BackgroundCanvas, DarkGlass, Button, IconButton } from './ui';
 
 export const WalletPanel: React.FC = () => {
   const { wallet, loading } = useWallet();
   const [showDeposit, setShowDeposit] = useState(false);
+  const dyn = useDynamicColors();
 
   if (loading || !wallet) {
     return (
@@ -40,23 +42,28 @@ export const WalletPanel: React.FC = () => {
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
       {/* 잔고 hero */}
       <View style={styles.hero}>
-        <Text style={styles.heroLabel}>USD 잔고</Text>
-        <Text style={styles.heroValue}>{formatAmount(wallet.balanceUsd, 'USD')}</Text>
-        <Text style={styles.heroSub}>XRPL Mainnet · USD IOU</Text>
+        <Text style={[styles.heroLabel, { color: dyn.textOnLightMuted }]}>USD 잔고</Text>
+        <Text style={[styles.heroValue, { color: dyn.textOnLight }]}>
+          {formatAmount(wallet.balanceUsd, 'USD')}
+        </Text>
+        <Text style={[styles.heroSub, { color: dyn.textOnLightFaint }]}>
+          XRPL Mainnet · USD IOU
+        </Text>
       </View>
 
       {/* 입금 받기 큰 버튼 */}
       <Button
         label="입금 받기"
         icon={ArrowDownToLine}
+        variant="success"
         fullWidth
         size="lg"
         onPress={() => setShowDeposit(true)}
         style={{ marginBottom: space.lg }}
       />
 
-      {/* 지갑 주소 카드 (글래스) */}
-      <Glass radius="lg" elevated style={styles.addrCard}>
+      {/* 지갑 주소 카드 — 다크 글라스 */}
+      <DarkGlass radius="lg" style={styles.addrCard}>
         <Text style={styles.addrLabel}>내 지갑 주소</Text>
         <Text style={styles.addrValue} selectable>
           {wallet.address}
@@ -77,9 +84,9 @@ export const WalletPanel: React.FC = () => {
             <Text style={styles.smallBtnText}>QR</Text>
           </Pressable>
         </View>
-      </Glass>
+      </DarkGlass>
 
-      <Text style={styles.footer}>
+      <Text style={[styles.footer, { color: dyn.textOnLightMuted }]}>
         이 주소로 USD를 받으면 잔고에 자동으로 추가됩니다.
       </Text>
 
@@ -99,6 +106,7 @@ const DepositModal: React.FC<{
   address: string;
   onClose: () => void;
 }> = ({ visible, address, onClose }) => {
+  const dyn = useDynamicColors();
   const handleCopy = async () => {
     await Clipboard.setStringAsync(address);
     Alert.alert('복사됨', '지갑 주소가 클립보드에 복사되었습니다');
@@ -119,14 +127,15 @@ const DepositModal: React.FC<{
       onRequestClose={onClose}
     >
       <View style={modalStyles.container}>
+        <BackgroundCanvas />
         <View style={modalStyles.header}>
           <IconButton icon={X} onPress={onClose} />
-          <Text style={modalStyles.title}>입금 받기</Text>
+          <Text style={[modalStyles.title, { color: dyn.textOnLight }]}>입금 받기</Text>
           <View style={{ width: 40 }} />
         </View>
 
         <View style={modalStyles.body}>
-          <Text style={modalStyles.hint}>
+          <Text style={[modalStyles.hint, { color: dyn.textOnLightMuted }]}>
             상대방에게 이 QR 또는 주소를 공유하세요.
           </Text>
 
@@ -134,12 +143,12 @@ const DepositModal: React.FC<{
             <QRCode value={address} size={220} color="#0A0E1A" backgroundColor="#FFFFFF" />
           </View>
 
-          <Glass radius="lg" elevated style={modalStyles.addrBlock}>
+          <DarkGlass radius="lg" style={modalStyles.addrBlock}>
             <Text style={modalStyles.addrLabel}>지갑 주소</Text>
             <Text style={modalStyles.addrValue} selectable>
               {address}
             </Text>
-          </Glass>
+          </DarkGlass>
 
           <View style={modalStyles.actions}>
             <Button
@@ -202,10 +211,10 @@ const styles = StyleSheet.create({
     paddingVertical: space.lg,
   },
   addrLabel: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.2,
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
     marginBottom: space.sm,
   },
@@ -249,7 +258,7 @@ const styles = StyleSheet.create({
 });
 
 const modalStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgDeep },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -290,15 +299,15 @@ const modalStyles = StyleSheet.create({
     marginBottom: space.lg,
   },
   addrLabel: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.2,
+    color: colors.textOnGlassFaint,
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
     marginBottom: space.sm,
   },
   addrValue: {
-    color: colors.text,
+    color: colors.textOnGlass,
     fontSize: 13,
     fontFamily: 'Menlo',
     letterSpacing: 0.4,

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,14 +10,14 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Carousel from 'react-native-reanimated-carousel';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { ChevronLeft, Plus, UserPlus, Users, Wallet } from 'lucide-react-native';
+import { ChevronLeft, CircleDot, Plus, UserPlus, Users, Wallet } from 'lucide-react-native';
 
 import { MemberCard } from '../components/MemberCard';
 import { CreateGroupModal } from '../components/CreateGroupModal';
@@ -29,8 +28,9 @@ import { useCards } from '../state/useCards';
 import { useGroup } from '../state/useGroup';
 import { Card } from '../types';
 import { RootStackParamList } from '../navigation';
-import { accentForCard, colors, motion, radius, space } from '../theme';
-import { Screen, IconButton, ColorPill, Glass } from '../components/ui';
+import { accentForCard, colors, radius, space } from '../theme';
+import { useDynamicColors, useThemeMode } from '../state/useThemeMode';
+import { Screen, IconButton, ColorPill } from '../components/ui';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Workspace'>;
 type Selection = 'wallet' | 'groups' | string;
@@ -40,6 +40,7 @@ export const WorkspaceScreen: React.FC<Props> = ({ navigation }) => {
   const [selection, setSelection] = useState<Selection>('wallet');
   const [showCreate, setShowCreate] = useState(false);
   const insets = useSafeAreaInsets();
+  const dyn = useDynamicColors();
 
   const groups = cards.filter((c) => c.kind === 'group');
   const activeGroup =
@@ -112,9 +113,7 @@ export const WorkspaceScreen: React.FC<Props> = ({ navigation }) => {
               size="sm"
               onPress={() => navigation.goBack()}
             />
-            <Text style={styles.brand}>
-              <Text style={styles.brandStar}>✳</Text> TransitX
-            </Text>
+            <Text style={[styles.brand, { color: dyn.textOnLight }]}>TransitX</Text>
           </View>
 
           {loading ? (
@@ -178,24 +177,33 @@ export const WorkspaceScreen: React.FC<Props> = ({ navigation }) => {
                 <View style={styles.addIcon}>
                   <Plus size={12} color={colors.textFaint} strokeWidth={2} />
                 </View>
-                <Text style={styles.addText}>그룹 추가</Text>
+                <Text style={[styles.addText, { color: dyn.textOnLightFaint }]}>그룹 추가</Text>
               </Pressable>
             </ScrollView>
           )}
         </View>
 
         {/* ─── Main content ─── */}
-        <View style={[styles.main, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <View style={styles.main}>
           <View style={{ flex: 1 }}>
             {selection === 'wallet' ? (
-              <WalletPanel />
+              <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+                <WalletPanel />
+              </View>
             ) : selection === 'groups' ? (
-              <GroupsPanel onSelect={setSelection} />
+              <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+                <GroupsPanel onSelect={setSelection} />
+              </View>
             ) : activeGroup ? (
               <GroupContent card={activeGroup} />
             ) : (
-              <View style={styles.center}>
-                <Text style={styles.empty}>그룹을 선택하세요</Text>
+              <View
+                style={[
+                  styles.center,
+                  { paddingTop: insets.top, paddingBottom: insets.bottom },
+                ]}
+              >
+                <Text style={[styles.empty, { color: dyn.textOnLightMuted }]}>그룹을 선택하세요</Text>
               </View>
             )}
           </View>
@@ -223,50 +231,81 @@ const SidebarTopItem: React.FC<{
   label: string;
   active: boolean;
   onPress: () => void;
-}> = ({ label, active, onPress }) => (
-  <Pressable
-    onPress={onPress}
-    style={({ pressed }) => [
-      styles.item,
-      active && styles.itemActive,
-      pressed && !active && { backgroundColor: colors.surfaceFaint },
-    ]}
-  >
-    <Text style={[styles.itemLabel, active && styles.itemLabelActive]} numberOfLines={1}>
-      {label}
-    </Text>
-  </Pressable>
-);
+}> = ({ icon: Icon, label, active, onPress }) => {
+  const dyn = useDynamicColors();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.item,
+        active && styles.itemActive,
+        pressed && !active && { backgroundColor: colors.surfaceFaint },
+      ]}
+    >
+      <Icon
+        size={14}
+        color={active ? dyn.textOnLight : dyn.textOnLightMuted}
+        strokeWidth={active ? 2.2 : 1.8}
+      />
+      <Text
+        style={[
+          styles.itemLabel,
+          { color: dyn.textOnLightMuted },
+          active && [styles.itemLabelActive, { color: dyn.textOnLight }],
+        ]}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+};
 
 const SidebarSubItem: React.FC<{ card: Card; active: boolean; onPress: () => void }> = ({
   card,
   active,
   onPress,
-}) => (
-  <Pressable
-    onPress={onPress}
-    style={({ pressed }) => [
-      styles.subItem,
-      active && styles.itemActive,
-      pressed && !active && { backgroundColor: colors.surfaceFaint },
-    ]}
-  >
-    <Text style={[styles.subLabel, active && styles.subLabelActive]} numberOfLines={1}>
-      {card.name}
-    </Text>
-  </Pressable>
-);
+}) => {
+  const accent = accentForCard(card.id);
+  const dyn = useDynamicColors();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.subItem,
+        active && styles.itemActive,
+        pressed && !active && { backgroundColor: colors.surfaceFaint },
+      ]}
+    >
+      <CircleDot size={11} color={accent} strokeWidth={2} />
+      <Text
+        style={[
+          styles.subLabel,
+          { color: dyn.textOnLightFaint },
+          active && [styles.subLabelActive, { color: dyn.textOnLight }],
+        ]}
+        numberOfLines={1}
+      >
+        {card.name}
+      </Text>
+    </Pressable>
+  );
+};
 
 // ─── Group content ──────────────────────────────────────────────
 
 const GroupContent: React.FC<{ card: Card }> = ({ card }) => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { group, loading, addMember } = useGroup(card.id);
-  const [activeIndex, setActiveIndex] = useState(0);
   const [showAddMember, setShowAddMember] = useState(false);
-
-  const SCREEN_W = Dimensions.get('window').width;
-  const CONTENT_W = SCREEN_W - 132;
+  const insets = useSafeAreaInsets();
+  const [panelH, setPanelH] = useState(180);
+  const dyn = useDynamicColors();
+  const { mode } = useThemeMode();
+  const fadeColors: [string, string] =
+    mode === 'dark'
+      ? ['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)']
+      : ['rgba(180,200,222,0)', 'rgba(180,200,222,0.85)'];
 
   if (loading || !group) {
     return (
@@ -278,74 +317,103 @@ const GroupContent: React.FC<{ card: Card }> = ({ card }) => {
 
   return (
     <View style={styles.groupRoot}>
-      <View style={styles.groupHeader}>
-        <View style={styles.groupAdminBadge}>
-          {/* 프로필 칩 — 카드 패턴 (가운데 투명, 가장자리 컬러) */}
-          <ColorPill size={28} accent={colors.primary} radius={14}>
-            <Text style={styles.groupAdminText}>Z</Text>
-          </ColorPill>
-          <Text style={styles.groupAdminLabel}>관리자 모드</Text>
-        </View>
-        <Pressable
-          onPress={() => setShowAddMember(true)}
-          style={({ pressed }) => [pressed && { opacity: 0.85 }]}
+      <View style={styles.groupBody}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.memberListContent,
+            { paddingTop: panelH + space.md },
+          ]}
+          showsVerticalScrollIndicator={false}
         >
-          <ColorPill accent={colors.primary} paddingH={12} paddingV={6} radius={999}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <UserPlus size={14} color="#FFFFFF" strokeWidth={2} />
-              <Text style={styles.addMemberText}>멤버 추가</Text>
-            </View>
-          </ColorPill>
-        </Pressable>
-      </View>
-
-      <View style={styles.groupTitleBlock}>
-        <Text style={styles.groupKicker}>Group</Text>
-        <Text style={styles.groupTitle} numberOfLines={2}>
-          {group.name}
-        </Text>
-        <Text style={styles.groupSub}>
-          {group.members.length}명 · 활성{' '}
-          {group.members.filter((m) => m.status === 'active').length}명
-        </Text>
-      </View>
-
-      <View style={styles.carouselWrap}>
-        <Carousel
-          loop={false}
-          width={CONTENT_W}
-          height={260}
-          data={group.members}
-          mode="parallax"
-          modeConfig={{
-            parallaxScrollingScale: 0.9,
-            parallaxScrollingOffset: 50,
-            parallaxAdjacentItemScale: 0.78,
-          }}
-          onSnapToItem={setActiveIndex}
-          renderItem={({ item }) => (
-            <View style={styles.carouselSlot}>
+          {group.members.map((m) => (
+            <View key={m.address} style={styles.memberItem}>
               <MemberCard
-                member={item}
+                member={m}
                 onPress={() =>
                   navigation.navigate('MemberDetail', {
                     groupId: card.id,
-                    memberAddr: item.address,
+                    memberAddr: m.address,
                   })
                 }
               />
             </View>
-          )}
-        />
-
-        <View style={styles.dots}>
-          {group.members.map((m, i) => (
-            <View
-              key={m.address}
-              style={[styles.dot, i === activeIndex && styles.dotActive]}
-            />
           ))}
+        </ScrollView>
+
+        {/* 타이틀 글라스 판넬 — 관리자 줄 + 그룹 타이틀을 한 덩어리로 */}
+        <View pointerEvents="box-none" style={styles.titleOverlay}>
+          <View
+            style={styles.titlePanelShadow}
+            onLayout={(e) => setPanelH(e.nativeEvent.layout.height)}
+          >
+            {/* 글라스 효과 layer — 카메라섬까지 전체 덮음 */}
+            <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.titlePanel]}>
+              <BlurView intensity={32} tint="light" style={StyleSheet.absoluteFill} />
+              <View
+                style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.28)' }]}
+              />
+              <LinearGradient
+                colors={['rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={styles.titleTopHighlight}
+              />
+              <View style={styles.titleTopHair} />
+              <View style={styles.titleBottomHair} />
+              <LinearGradient
+                colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.5)']}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={styles.titleFade}
+              />
+            </View>
+
+            {/* 콘텐츠 — 안전영역 아래에서 시작 */}
+            <View style={{ paddingTop: insets.top }}>
+              {/* 관리자 줄 */}
+              <View style={styles.groupHeader}>
+                <View style={styles.groupAdminBadge}>
+                  <ColorPill size={28} accent={colors.primary} radius={14}>
+                    <Text style={styles.groupAdminText}>Z</Text>
+                  </ColorPill>
+                  <Text style={[styles.groupAdminLabel, { color: dyn.textOnLight }]}>관리자 모드</Text>
+                </View>
+                <Pressable
+                  onPress={() => setShowAddMember(true)}
+                  style={({ pressed }) => [pressed && { opacity: 0.85 }]}
+                >
+                  <ColorPill accent={colors.primary} paddingH={12} paddingV={6} radius={999}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <UserPlus size={14} color="#FFFFFF" strokeWidth={2} />
+                      <Text style={styles.addMemberText}>멤버 추가</Text>
+                    </View>
+                  </ColorPill>
+                </Pressable>
+              </View>
+
+              {/* 타이틀 */}
+              <View style={styles.groupTitleBlock}>
+                <Text style={[styles.groupKicker, { color: dyn.textOnLightFaint }]}>Group</Text>
+                <Text style={[styles.groupTitle, { color: dyn.textOnLight }]} numberOfLines={2}>
+                  {group.name}
+                </Text>
+                <Text style={[styles.groupSub, { color: dyn.textOnLightMuted }]}>
+                  {group.members.length}명 · 활성{' '}
+                  {group.members.filter((m) => m.status === 'active').length}명
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
+
+        {/* 하단 fade — 스크롤 끝이 자연스럽게 사라짐 */}
+        <LinearGradient
+          pointerEvents="none"
+          colors={fadeColors}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={[styles.bottomFade, { height: insets.bottom + 64 }]}
+        />
       </View>
 
       <AddMemberModal
@@ -380,7 +448,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.2,
   },
-  brandStar: { color: colors.primary },
   sidebarScroll: { flex: 1 },
   sidebarScrollContent: {
     paddingHorizontal: space.sm,
@@ -529,7 +596,7 @@ const styles = StyleSheet.create({
   main: { flex: 1 },
 
   // Group content
-  groupRoot: { flex: 1, paddingTop: space.lg },
+  groupRoot: { flex: 1 },
   groupHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -613,29 +680,69 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
   },
 
-  carouselWrap: {
+  groupBody: {
     flex: 1,
-    alignItems: 'center',
   },
-  carouselSlot: {
-    flex: 1,
-    paddingHorizontal: space.sm,
-    justifyContent: 'center',
+  titleOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
-  dots: {
-    flexDirection: 'row',
-    gap: 5,
-    marginTop: space.md,
+  titlePanelShadow: {
+    shadowColor: '#3B5DCC',
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
   },
-  dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: 'rgba(14,17,22,0.18)',
+  titlePanel: {
+    overflow: 'hidden',
   },
-  dotActive: {
-    backgroundColor: colors.primary,
-    width: 14,
+  titleTopHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 22,
+  },
+  titleTopHair: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+  },
+  titleBottomHair: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+  },
+  titleFade: {
+    position: 'absolute',
+    bottom: -20,
+    left: 0,
+    right: 0,
+    height: 20,
+  },
+  memberListContent: {
+    paddingTop: 130,
+    paddingHorizontal: space.lg,
+    paddingBottom: space.xxl * 3,
+    gap: space.md,
+  },
+  memberItem: {
+    width: '100%',
+  },
+  bottomFade: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
 
   center: {

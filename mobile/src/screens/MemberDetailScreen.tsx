@@ -18,7 +18,7 @@ import { useTxHistory } from '../state/useTxHistory';
 import { RootStackParamList } from '../navigation';
 import { colors, motion, space } from '../theme';
 import { formatAmount } from '../format';
-import { Screen, ScreenHeader, IconButton, Glass, Section, Row, Button } from '../components/ui';
+import { Screen, ScreenHeader, IconButton, DarkGlass, Section, Row, Button } from '../components/ui';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MemberDetail'>;
 
@@ -110,7 +110,7 @@ export const MemberDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
         {/* 정보 카드 (글래스) */}
         <View style={styles.infoWrap}>
-          <Glass radius="lg" elevated style={styles.infoCard}>
+          <DarkGlass radius="lg" style={styles.infoCard}>
             <Row label="지갑 주소" value={shortAddr(member.address)} onPress={handleCopy} />
             <View style={styles.divider} />
             <Row
@@ -121,7 +121,7 @@ export const MemberDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             />
             <View style={styles.divider} />
             <Row label="오늘 사용" value={formatAmount(member.spentTodayKrw, 'KRW')} />
-          </Glass>
+          </DarkGlass>
         </View>
 
         {/* 액션 — 권한 토글 / 퇴장 */}
@@ -146,7 +146,7 @@ export const MemberDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
         {/* 사용 내역 */}
         <Section title="사용 내역">
-          <Glass radius="lg" elevated style={styles.txCard}>
+          <DarkGlass radius="lg" style={styles.txCard}>
             {memberTxs.length === 0 ? (
               <Text style={styles.empty}>이 멤버의 결제 내역이 없습니다</Text>
             ) : (
@@ -157,7 +157,7 @@ export const MemberDetailScreen: React.FC<Props> = ({ route, navigation }) => {
                 </View>
               ))
             )}
-          </Glass>
+          </DarkGlass>
         </Section>
       </ScrollView>
     </Screen>
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     paddingVertical: space.sm,
   },
   empty: {
-    color: colors.textFaint,
+    color: colors.textOnGlassFaint,
     fontSize: 13,
     textAlign: 'center',
     paddingVertical: space.xl,

@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { ArrowUpRight } from 'lucide-react-native';
 import { Tx } from '../types';
-import { colors, radius, space } from '../theme';
+import { colors, radius, space, font } from '../theme';
 import { formatAmount, relativeTime, shortAddr } from '../format';
 
 type Props = {
@@ -106,14 +106,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   merchant: {
-    color: '#FFFFFF',
+    color: colors.textOnGlass,
     fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: -0.2,
+    fontWeight: '500',
+    letterSpacing: 0,
     marginBottom: 2,
   },
   sub: {
-    color: 'rgba(255,255,255,0.6)',
+    color: colors.textOnGlassFaint,
     fontSize: 12,
     fontWeight: '500',
   },
@@ -121,13 +121,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   amountKrw: {
-    color: '#FFFFFF',
+    color: colors.textOnGlass,
     fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   amountUsd: {
-    color: 'rgba(255,255,255,0.5)',
+    color: colors.textOnGlassFaint,
     fontSize: 12,
     fontWeight: '500',
     marginTop: 2,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle, StyleProp } from 'react-native';
-import { colors, space } from '../../theme';
+import { space } from '../../theme';
+import { useDynamicColors } from '../../state/useThemeMode';
 
 type Props = {
   title?: string;
@@ -9,18 +10,21 @@ type Props = {
   children: React.ReactNode;
 };
 
-export const Section: React.FC<Props> = ({ title, right, style, children }) => (
-  <View style={[styles.root, style]}>
-    {(title || right) && (
-      <View style={styles.header}>
-        {title && <Text style={styles.title}>{title}</Text>}
-        <View style={{ flex: 1 }} />
-        {right}
-      </View>
-    )}
-    {children}
-  </View>
-);
+export const Section: React.FC<Props> = ({ title, right, style, children }) => {
+  const dyn = useDynamicColors();
+  return (
+    <View style={[styles.root, style]}>
+      {(title || right) && (
+        <View style={styles.header}>
+          {title && <Text style={[styles.title, { color: dyn.textOnLight }]}>{title}</Text>}
+          <View style={{ flex: 1 }} />
+          {right}
+        </View>
+      )}
+      {children}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   root: {
@@ -33,7 +37,6 @@ const styles = StyleSheet.create({
     marginBottom: space.sm,
   },
   title: {
-    color: colors.textOnLight,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: -0.3,

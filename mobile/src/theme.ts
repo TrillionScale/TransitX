@@ -19,6 +19,12 @@ export const colors = {
   text: '#F5F6F9',
   textMuted: 'rgba(245,246,249,0.65)',
   textFaint: 'rgba(245,246,249,0.42)',
+  // 글라스 위 — cool white + 알파 단계화 (iOS 시스템 패턴)
+  textOnGlass: 'rgba(245,247,255,0.95)',
+  textOnGlassMuted: 'rgba(245,247,255,0.7)',
+  textOnGlassFaint: 'rgba(245,247,255,0.5)',
+  textOnGlassDim: 'rgba(245,247,255,0.35)',
+  accentOnGlass: '#A5BAFF',
   // 라이트 페일 배경 위 직접 — 짙은 톤
   textOnLight: '#0E1116',
   textOnLightMuted: 'rgba(14,17,22,0.62)',

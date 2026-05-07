@@ -10,7 +10,8 @@ import { useTxHistory } from '../state/useTxHistory';
 import { Tx } from '../types';
 import { RootStackParamList } from '../navigation';
 import { colors, space } from '../theme';
-import { Screen, ScreenHeader, IconButton, Glass, Section } from '../components/ui';
+import { useDynamicColors } from '../state/useThemeMode';
+import { Screen, ScreenHeader, IconButton, DarkGlass, Section } from '../components/ui';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CardDetail'>;
 
@@ -20,6 +21,7 @@ export const CardDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const card = cards.find((c) => c.id === cardId);
   const { txs, loading } = useTxHistory(cardId);
   const sections = useMemo(() => groupByDay(txs), [txs]);
+  const dyn = useDynamicColors();
 
   if (!card) {
     return (
@@ -47,10 +49,10 @@ export const CardDetailScreen: React.FC<Props> = ({ route, navigation }) => {
           />
         </View>
 
-        <Text style={styles.hint}>탭해서 결제 시작</Text>
+        <Text style={[styles.hint, { color: dyn.textOnLightFaint }]}>탭해서 결제 시작</Text>
 
         <Section title="거래 내역">
-          <Glass radius="lg" elevated style={styles.txCard}>
+          <DarkGlass radius="lg" style={styles.txCard}>
             {loading ? (
               <View style={styles.loading}>
                 <ActivityIndicator color={colors.primary} />
@@ -70,7 +72,7 @@ export const CardDetailScreen: React.FC<Props> = ({ route, navigation }) => {
                 </View>
               ))
             )}
-          </Glass>
+          </DarkGlass>
         </Section>
       </ScrollView>
     </Screen>
@@ -127,15 +129,15 @@ const styles = StyleSheet.create({
   },
   empty: {
     textAlign: 'center',
-    color: colors.textFaint,
+    color: colors.textOnGlassFaint,
     fontSize: 13,
     paddingVertical: space.xxl,
   },
   dayLabel: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.2,
+    color: colors.textOnGlassFaint,
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
     marginTop: space.md,
     marginBottom: space.xs,
