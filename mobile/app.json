@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "TransitX",
+    "slug": "transitx",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.transitx.demo",
+      "infoPlist": {
+        "NFCReaderUsageDescription": "TransitX는 NFC 태그를 읽어 결제를 시작합니다.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.developer.nfc.readersession.formats": [
+          "NDEF",
+          "TAG"
+        ]
+      }
+    },
+    "android": {
+      "package": "com.transitx.demo",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.NFC"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "react-native-nfc-manager",
+        {
+          "nfcPermission": "TransitX는 NFC 태그를 읽어 결제를 시작합니다.",
+          "selectIdentifiers": [],
+          "systemCodes": [],
+          "includeNdefEntitlement": true
+        }
+      ],
+      "expo-font"
+    ]
+  }
+}

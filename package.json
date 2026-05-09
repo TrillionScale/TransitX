@@ -1,0 +1,5 @@
+{
+  "name": "transitx",
+  "private": true,
+  "_comment": "루트는 빈 컨테이너. 모든 의존성은 mobile/package.json에. workspaces는 packages/xrpl-core 추가 시점에 다시 결정."
+}
