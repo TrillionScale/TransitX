@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ChevronLeft } from 'lucide-react-native';
 
@@ -15,6 +15,9 @@ import { Screen, ScreenHeader, IconButton, DarkGlass, Section } from '../compone
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CardDetail'>;
 
+const CARD_RATIO = 1 / 1.586;
+const MAX_PHONE_W = 430;
+
 export const CardDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { cardId } = route.params;
   const { cards } = useCards();
@@ -22,6 +25,10 @@ export const CardDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { txs, loading } = useTxHistory(cardId);
   const sections = useMemo(() => groupByDay(txs), [txs]);
   const dyn = useDynamicColors();
+  const { width: WIN_W } = useWindowDimensions();
+  const containerW = Platform.OS === 'web' ? Math.min(WIN_W, MAX_PHONE_W) : WIN_W;
+  const cardW = Math.min(containerW - 48, 360);
+  const cardH = Math.round(cardW * CARD_RATIO);
 
   if (!card) {
     return (
@@ -42,11 +49,13 @@ export const CardDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.cardWrap}>
-          <CardItem
-            card={card}
-            variant="large"
-            onPress={() => navigation.navigate('Pay', { cardId })}
-          />
+          <View style={{ width: cardW, height: cardH, alignSelf: 'center' }}>
+            <CardItem
+              card={card}
+              variant="credit"
+              onPress={() => navigation.navigate('Pay', { cardId })}
+            />
+          </View>
         </View>
 
         <Text style={[styles.hint, { color: dyn.textOnLightFaint }]}>탭해서 결제 시작</Text>

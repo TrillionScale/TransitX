@@ -1,35 +1,63 @@
 import React from 'react';
-import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
+import { Platform, StyleSheet, View, ViewStyle, StyleProp, useWindowDimensions } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { BackgroundCanvas } from './BackgroundCanvas';
 
+const MAX_PHONE_W = 430;
+
 type Props = {
   edges?: readonly Edge[];
-  /** noEnter는 호환성 — 무시해도 됨 */
   noEnter?: boolean;
   style?: StyleProp<ViewStyle>;
   children: React.ReactNode;
 };
 
-/**
- * 모든 화면의 표준 wrapper.
- * - 다크 그라디언트 배경 + glow blob 자동
- * - SafeArea
- *
- * 등장 애니메이션은 RN Stack Navigator의 기본 transition에 맡김 (slide).
- * moti를 여기에서 쓰면 React 19 + moti 0.30 호환 이슈로 깨질 수 있어 제거.
- */
-export const Screen: React.FC<Props> = ({ edges = ['top'], style, children }) => (
-  <View style={styles.root}>
-    <BackgroundCanvas />
-    <SafeAreaView style={styles.safe} edges={edges}>
-      <View style={[styles.flex, style]}>{children}</View>
-    </SafeAreaView>
-  </View>
-);
+export const Screen: React.FC<Props> = ({ edges = ['top'], style, children }) => {
+  const { width: WIN_W } = useWindowDimensions();
+  const isPC = Platform.OS === 'web' && WIN_W > MAX_PHONE_W + 40;
+
+  return (
+    <View style={styles.root}>
+      <BackgroundCanvas />
+      {isPC ? (
+        // PC: center phone content at 430px, show beautiful background on sides
+        <View style={styles.pcOuter}>
+          <View style={styles.pcFrame}>
+            <SafeAreaView style={styles.safe} edges={edges}>
+              <View style={[styles.flex, style]}>{children}</View>
+            </SafeAreaView>
+          </View>
+        </View>
+      ) : (
+        <SafeAreaView style={styles.safe} edges={edges}>
+          <View style={[styles.flex, style]}>{children}</View>
+        </SafeAreaView>
+      )}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
   safe: { flex: 1 },
   flex: { flex: 1 },
+
+  // PC layout
+  pcOuter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pcFrame: {
+    width: MAX_PHONE_W,
+    flex: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    shadowColor: '#000',
+    shadowOpacity: 0.45,
+    shadowRadius: 60,
+    shadowOffset: { width: 0, height: 0 },
+    overflow: 'hidden',
+  } as ViewStyle,
 });

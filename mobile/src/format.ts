@@ -18,3 +18,19 @@ export const relativeTime = (timestamp: number): string => {
   const d = Math.floor(h / 24);
   return `${d}일 전`;
 };
+
+export const fullDateTime = (timestamp: number): string => {
+  const d = new Date(timestamp);
+  const now = new Date();
+  const yesterday = new Date(Date.now() - 86400000);
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+  const hh = d.getHours().toString().padStart(2, '0');
+  const mm = d.getMinutes().toString().padStart(2, '0');
+  const time = `${hh}:${mm}`;
+  if (sameDay(d, now)) return `오늘 ${time}`;
+  if (sameDay(d, yesterday)) return `어제 ${time}`;
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 ${time}`;
+};
