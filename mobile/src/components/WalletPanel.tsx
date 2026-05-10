@@ -47,7 +47,7 @@ export const WalletPanel: React.FC = () => {
           {formatAmount(wallet.balanceUsd, 'USD')}
         </Text>
         <Text style={[styles.heroSub, { color: dyn.textOnLightFaint }]}>
-          XRPL Mainnet · USD IOU
+          XRPL Testnet · XRP 실시간 환산
         </Text>
       </View>
 

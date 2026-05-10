@@ -1,8 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 import { Member } from '../types';
-import { accentForCard, colors, font, radius, space } from '../theme';
+import { accentForCard, colors, radius, space } from '../theme';
 import { formatAmount, shortAddr } from '../format';
 
 type Props = {
@@ -10,17 +10,35 @@ type Props = {
   onPress?: () => void;
 };
 
+const avatarUrl = (seed: string) =>
+  `https://api.dicebear.com/9.x/avataaars/png?seed=${encodeURIComponent(seed)}&size=88&backgroundColor=transparent`;
+
 export const MemberRow: React.FC<Props> = ({ member, onPress }) => {
   const accent = accentForCard(member.address);
-  const initial = member.alias.replace(/[^가-힣A-Za-z]/g, '')[0] ?? '?';
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      <View style={[styles.avatar, { backgroundColor: accent }]}>
-        <Text style={styles.avatarText}>{initial}</Text>
+      {/* 아바타 */}
+      <View style={[styles.avatarWrap, { borderColor: accent + '55' }]}>
+        <Image
+          source={{ uri: avatarUrl(member.address) }}
+          style={styles.avatarImg}
+        />
+        {/* accent 링 빛 */}
+        <View style={[StyleSheet.absoluteFill, styles.avatarOverlay, { backgroundColor: accent + '12' }]} />
+        {/* active/frozen 상태 도트 */}
+        <View
+          style={[
+            styles.statusDot,
+            {
+              backgroundColor: member.status === 'frozen' ? '#5BB8FF' : colors.success,
+              borderColor: colors.bg,
+            },
+          ]}
+        />
       </View>
 
       <View style={styles.middle}>
@@ -55,24 +73,35 @@ const styles = StyleSheet.create({
     paddingVertical: space.md,
     gap: space.md,
   },
-  pressed: {
-    opacity: 0.7,
+  pressed: { opacity: 0.7 },
+
+  avatarWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    position: 'relative',
   },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
+  avatarImg: {
+    width: '100%',
+    height: '100%',
   },
-  avatarText: {
-    color: colors.textInverse,
-    fontSize: 17,
-    fontWeight: '700',
+  avatarOverlay: {
+    borderRadius: 999,
   },
-  middle: {
-    flex: 1,
+  statusDot: {
+    position: 'absolute',
+    bottom: 1,
+    right: 1,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
   },
+
+  middle: { flex: 1 },
   aliasRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -89,10 +118,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: radius.sm,
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(100,180,255,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(100,180,255,0.30)',
   },
   frozenText: {
-    color: colors.textMuted,
+    color: '#88CCFF',
     fontSize: 9,
     fontWeight: '700',
     letterSpacing: 0.8,
@@ -102,6 +133,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+
   right: {
     flexDirection: 'row',
     alignItems: 'center',

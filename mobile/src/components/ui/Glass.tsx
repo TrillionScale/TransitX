@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { radius as R } from '../../theme';
+import { BlurFill } from './BlurFill';
 
 type Variant = 'thin' | 'regular' | 'thick';
 
@@ -42,7 +42,7 @@ export const Glass: React.FC<Props> = ({
         pointerEvents="none"
         style={[StyleSheet.absoluteFillObject, { borderRadius: r, overflow: 'hidden' }]}
       >
-        <BlurView intensity={28} tint="light" style={StyleSheet.absoluteFill} />
+        <BlurFill intensity={28} tint="light" style={StyleSheet.absoluteFill} />
 
         {/* 가운데만 옅게 어둡게 — 반투명 떠있는 느낌 */}
         <LinearGradient

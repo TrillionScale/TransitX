@@ -1,4 +1,5 @@
 export { BackgroundCanvas } from './BackgroundCanvas';
+export { BlurFill } from './BlurFill';
 export { Glass } from './Glass';
 export { DarkGlass } from './DarkGlass';
 export { Screen } from './Screen';

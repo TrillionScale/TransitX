@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { radius as R } from '../../theme';
+import { BlurFill } from './BlurFill';
 
 type Props = {
   radius?: keyof typeof R;
@@ -19,7 +19,7 @@ export const DarkGlass: React.FC<Props> = ({ radius = 'lg', style, children }) =
   return (
     <View style={[styles.root, { borderRadius: r }, style]}>
       <View style={[StyleSheet.absoluteFillObject, { borderRadius: r, overflow: 'hidden' }]}>
-        <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurFill intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
         <View
           style={[
             StyleSheet.absoluteFill,

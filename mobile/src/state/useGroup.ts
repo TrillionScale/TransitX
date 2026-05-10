@@ -55,5 +55,13 @@ export function useGroup(groupId: string) {
     [groupId, refresh],
   );
 
-  return { group, loading, refresh, findMember, addMember, freezeMember, removeMember };
+  const updateMember = useCallback(
+    async (addr: string, data: { alias?: string; dailyLimitKrw?: number }) => {
+      await api.updateMember(groupId, addr, data);
+      await refresh();
+    },
+    [groupId, refresh],
+  );
+
+  return { group, loading, refresh, findMember, addMember, freezeMember, removeMember, updateMember };
 }

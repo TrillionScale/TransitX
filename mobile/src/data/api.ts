@@ -1,16 +1,23 @@
 import * as mock from './mocks';
+import {
+  getOrCreateWallet,
+  getXrpBalance,
+  quoteKrw,
+  sendXrpPayment,
+  MERCHANT_ADDRESS,
+} from './xrplClient';
 import { Card, Group, PayResult, Quote, Tx } from '../types';
 
-// 함수별 mock 토글. Karin이 한 함수씩 완성하면 이 줄만 false로.
+// mock 토글: false로 바꾸면 실제 XRPL 사용
 const MOCK = {
-  myWallet: true,
+  myWallet: false,  // ← 실제 XRPL 지갑
   myCards: true,
-  balance: true,
+  balance: false,   // ← 실제 XRP 잔액
   txHistory: true,
   myGroups: true,
   getGroup: true,
-  quote: true,
-  pay: true,
+  quote: false,     // ← 실제 환율 (CoinGecko)
+  pay: false,       // ← 실제 XRPL 결제
   createGroup: true,
   addMember: true,
   freezeMember: true,
@@ -20,14 +27,27 @@ const MOCK = {
 // ─── public api ──────────────────────────────────────────────────
 
 export const api = {
-  myWallet: (): Promise<{ address: string; balanceUsd: number }> =>
-    MOCK.myWallet ? mock.myWallet() : Promise.reject(new Error('not implemented')),
+  myWallet: async (): Promise<{ address: string; balanceUsd: number }> => {
+    if (MOCK.myWallet) return mock.myWallet();
+    const wallet = await getOrCreateWallet();
+    const xrp = await getXrpBalance(wallet.address);
+    // XRP → USD 간단 환산 (표시용)
+    let xrpUsd = 0.5;
+    try {
+      const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd');
+      const d = await res.json();
+      xrpUsd = d.ripple.usd;
+    } catch { /* ignore */ }
+    return { address: wallet.address, balanceUsd: xrp * xrpUsd };
+  },
 
   myCards: (): Promise<Card[]> =>
     MOCK.myCards ? mock.myCards() : Promise.reject(new Error('not implemented')),
 
-  balance: (addr: string): Promise<number> =>
-    MOCK.balance ? mock.balance(addr) : Promise.reject(new Error('not implemented')),
+  balance: async (addr: string): Promise<number> => {
+    if (MOCK.balance) return mock.balance(addr);
+    return getXrpBalance(addr);
+  },
 
   txHistory: (addr: string): Promise<Tx[]> =>
     MOCK.txHistory ? mock.txHistory(addr) : Promise.reject(new Error('not implemented')),
@@ -38,11 +58,18 @@ export const api = {
   getGroup: (addr: string): Promise<Group | undefined> =>
     MOCK.getGroup ? mock.getGroup(addr) : Promise.reject(new Error('not implemented')),
 
-  quote: (krw: number): Promise<Quote> =>
-    MOCK.quote ? mock.quote(krw) : Promise.reject(new Error('not implemented')),
+  quote: async (krw: number): Promise<Quote> => {
+    if (MOCK.quote) return mock.quote(krw);
+    return quoteKrw(krw);
+  },
 
-  pay: (from: string, q: Quote, krw: number): Promise<PayResult> =>
-    MOCK.pay ? mock.pay(from, q, krw) : Promise.reject(new Error('not implemented')),
+  pay: async (from: string, q: Quote, krw: number): Promise<PayResult> => {
+    if (MOCK.pay) return mock.pay(from, q, krw);
+    const wallet = await getOrCreateWallet();
+    const drops = (q.paths[0] as any)?.drops as string;
+    if (!drops) throw new Error('Invalid quote: missing drops');
+    return sendXrpPayment(wallet, MERCHANT_ADDRESS, drops);
+  },
 
   createGroup: (name: string, usd: number): Promise<Group> =>
     MOCK.createGroup ? mock.createGroup(name, usd) : Promise.reject(new Error('not implemented')),
@@ -55,4 +82,10 @@ export const api = {
 
   removeMember: (groupAddr: string, memberAddr: string): Promise<void> =>
     MOCK.removeMember ? mock.removeMember(groupAddr, memberAddr) : Promise.reject(new Error('not implemented')),
+
+  updateMember: (
+    groupAddr: string,
+    memberAddr: string,
+    data: { alias?: string; dailyLimitKrw?: number },
+  ): Promise<void> => mock.updateMember(groupAddr, memberAddr, data),
 };
