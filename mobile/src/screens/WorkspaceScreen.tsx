@@ -1,10 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
+  Animated as RNAnimated,
+  PanResponder,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -17,7 +21,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { ChevronLeft, CircleDot, Plus, UserPlus, Users, Wallet } from 'lucide-react-native';
+import { ChevronLeft, CircleDot, Plus, UserPlus, Users, Wallet, PowerOff } from 'lucide-react-native';
 
 import { MemberCard } from '../components/MemberCard';
 import { CreateGroupModal } from '../components/CreateGroupModal';
@@ -296,12 +300,62 @@ const SidebarSubItem: React.FC<{ card: Card; active: boolean; onPress: () => voi
 
 const GroupContent: React.FC<{ card: Card }> = ({ card }) => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { group, loading, addMember } = useGroup(card.id);
+  const { group, loading, addMember, freezeMember } = useGroup(card.id);
   const [showAddMember, setShowAddMember] = useState(false);
   const insets = useSafeAreaInsets();
   const [panelH, setPanelH] = useState(180);
   const dyn = useDynamicColors();
   const { mode } = useThemeMode();
+  const { width: WIN_W, height: WIN_H } = useWindowDimensions();
+  const isWide = WIN_W > 560;
+
+  // ── 드래그 가능 "사용 종료" 플로팅 버튼 ──
+  const floatPos = useRef(new RNAnimated.ValueXY({ x: WIN_W - SIDEBAR_W - 76, y: WIN_H - 210 })).current;
+  const lastPos = useRef({ x: WIN_W - SIDEBAR_W - 76, y: WIN_H - 210 });
+  const isDragging = useRef(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        isDragging.current = false;
+        floatPos.setOffset({ x: lastPos.current.x, y: lastPos.current.y });
+        floatPos.setValue({ x: 0, y: 0 });
+      },
+      onPanResponderMove: (_, gs) => {
+        if (Math.abs(gs.dx) > 4 || Math.abs(gs.dy) > 4) isDragging.current = true;
+        RNAnimated.event([null, { dx: floatPos.x, dy: floatPos.y }], { useNativeDriver: false })(_, gs);
+      },
+      onPanResponderRelease: (_, gs) => {
+        floatPos.flattenOffset();
+        lastPos.current = {
+          x: lastPos.current.x + gs.dx,
+          y: lastPos.current.y + gs.dy,
+        };
+        if (!isDragging.current && group) {
+          const activeMembers = group.members.filter(
+            (m) => m.status === 'active' && m.spentTodayKrw > 0,
+          );
+          if (activeMembers.length === 0) {
+            Alert.alert('사용 종료', '현재 사용 중인 멤버가 없습니다.');
+            return;
+          }
+          Alert.alert(
+            '사용 종료',
+            '결제 권한을 동결할 멤버를 선택하세요',
+            [
+              ...activeMembers.map((m) => ({
+                text: m.alias,
+                onPress: () => freezeMember(m.address),
+              })),
+              { text: '취소', style: 'cancel' as const },
+            ],
+          );
+        }
+      },
+    }),
+  ).current;
   const fadeColors: [string, string] =
     mode === 'dark'
       ? ['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)']
@@ -325,19 +379,21 @@ const GroupContent: React.FC<{ card: Card }> = ({ card }) => {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          {group.members.map((m) => (
-            <View key={m.address} style={styles.memberItem}>
-              <MemberCard
-                member={m}
-                onPress={() =>
-                  navigation.navigate('MemberDetail', {
-                    groupId: card.id,
-                    memberAddr: m.address,
-                  })
-                }
-              />
-            </View>
-          ))}
+          <View style={[styles.memberGrid, isWide && styles.memberGridWide]}>
+            {group.members.map((m) => (
+              <View key={m.address} style={[styles.memberItem, isWide && styles.memberItemWide]}>
+                <MemberCard
+                  member={m}
+                  onPress={() =>
+                    navigation.navigate('MemberDetail', {
+                      groupId: card.id,
+                      memberAddr: m.address,
+                    })
+                  }
+                />
+              </View>
+            ))}
+          </View>
         </ScrollView>
 
         {/* 타이틀 글라스 판넬 — 관리자 줄 + 그룹 타이틀을 한 덩어리로 */}
@@ -415,6 +471,25 @@ const GroupContent: React.FC<{ card: Card }> = ({ card }) => {
           style={[styles.bottomFade, { height: insets.bottom + 64 }]}
         />
       </View>
+
+      {/* ── 드래그 가능 사용 종료 플로팅 버튼 ── */}
+      <RNAnimated.View
+        {...panResponder.panHandlers}
+        style={[styles.floatBtn, { transform: floatPos.getTranslateTransform() }]}
+      >
+        <LinearGradient
+          colors={['#3B2A4A', '#1E1030']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[StyleSheet.absoluteFill, { borderRadius: 22 }]}
+        />
+        <View pointerEvents="none" style={styles.floatBtnBorder} />
+        {group && group.members.some((m) => m.status === 'active' && m.spentTodayKrw > 0) && (
+          <View style={styles.floatActiveDot} />
+        )}
+        <PowerOff size={18} color="#D4AAFF" strokeWidth={2} />
+        <Text style={styles.floatBtnLabel}>사용 종료</Text>
+      </RNAnimated.View>
 
       <AddMemberModal
         visible={showAddMember}
@@ -733,16 +808,68 @@ const styles = StyleSheet.create({
     paddingTop: 130,
     paddingHorizontal: space.lg,
     paddingBottom: space.xxl * 3,
+  },
+  memberGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: space.md,
+  },
+  memberGridWide: {
+    gap: space.lg,
   },
   memberItem: {
     width: '100%',
+  },
+  memberItemWide: {
+    width: '47%',
   },
   bottomFade: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+  },
+
+  // ── 드래그 플로팅 버튼 ──────────────────────────────────────────
+  floatBtn: {
+    position: 'absolute',
+    width: 64,
+    height: 64,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    shadowColor: '#9B6DFF',
+    shadowOpacity: 0.55,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 14,
+    overflow: 'hidden',
+  },
+  floatBtnBorder: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(180,140,255,0.30)',
+  },
+  floatBtnLabel: {
+    color: '#D4AAFF',
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  floatActiveDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#5EE7A8',
+    shadowColor: '#5EE7A8',
+    shadowOpacity: 0.9,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
   },
 
   center: {
