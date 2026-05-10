@@ -16,14 +16,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.transitx.demo",
       "infoPlist": {
-        "NFCReaderUsageDescription": "TransitX는 NFC 태그를 읽어 결제를 시작합니다.",
         "ITSAppUsesNonExemptEncryption": false
-      },
-      "entitlements": {
-        "com.apple.developer.nfc.readersession.formats": [
-          "NDEF",
-          "TAG"
-        ]
       }
     },
     "android": {
@@ -42,15 +35,6 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      [
-        "react-native-nfc-manager",
-        {
-          "nfcPermission": "TransitX는 NFC 태그를 읽어 결제를 시작합니다.",
-          "selectIdentifiers": [],
-          "systemCodes": [],
-          "includeNdefEntitlement": true
-        }
-      ],
       "expo-font"
     ]
   }

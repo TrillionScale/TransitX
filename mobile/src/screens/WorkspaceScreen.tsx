@@ -45,6 +45,7 @@ export const WorkspaceScreen: React.FC<Props> = ({ navigation }) => {
   const [showCreate, setShowCreate] = useState(false);
   const insets = useSafeAreaInsets();
   const dyn = useDynamicColors();
+  const { mode } = useThemeMode();
 
   const groups = cards.filter((c) => c.kind === 'group');
   const activeGroup =
@@ -92,12 +93,18 @@ export const WorkspaceScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.sidebar}>
           <BlurView
             intensity={28}
-            tint="light"
+            tint={mode === 'dark' ? 'dark' : 'light'}
             style={StyleSheet.absoluteFill}
           />
           <View
             pointerEvents="none"
-            style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.18)' }]}
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor:
+                  mode === 'dark' ? 'rgba(20,28,48,0.55)' : 'rgba(255,255,255,0.18)',
+              },
+            ]}
           />
           {/* 우측 hairline */}
           <View
@@ -108,7 +115,8 @@ export const WorkspaceScreen: React.FC<Props> = ({ navigation }) => {
               bottom: 0,
               right: 0,
               width: 1,
-              backgroundColor: 'rgba(255,255,255,0.4)',
+              backgroundColor:
+                mode === 'dark' ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.4)',
             }}
           />
           <View style={[styles.sidebarTop, { paddingTop: insets.top + space.md }]}>
@@ -404,20 +412,48 @@ const GroupContent: React.FC<{ card: Card }> = ({ card }) => {
           >
             {/* 글라스 효과 layer — 카메라섬까지 전체 덮음 */}
             <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.titlePanel]}>
-              <BlurView intensity={32} tint="light" style={StyleSheet.absoluteFill} />
+              <BlurView
+                intensity={32}
+                tint={mode === 'dark' ? 'dark' : 'light'}
+                style={StyleSheet.absoluteFill}
+              />
               <View
-                style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.28)' }]}
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    backgroundColor:
+                      mode === 'dark' ? 'rgba(20,28,48,0.55)' : 'rgba(255,255,255,0.28)',
+                  },
+                ]}
               />
               <LinearGradient
-                colors={['rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']}
+                colors={
+                  mode === 'dark'
+                    ? ['rgba(255,255,255,0.20)', 'rgba(255,255,255,0)']
+                    : ['rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']
+                }
                 start={{ x: 0.5, y: 0 }}
                 end={{ x: 0.5, y: 1 }}
                 style={styles.titleTopHighlight}
               />
-              <View style={styles.titleTopHair} />
-              <View style={styles.titleBottomHair} />
+              <View
+                style={[
+                  styles.titleTopHair,
+                  mode === 'dark' && { backgroundColor: 'rgba(255,255,255,0.35)' },
+                ]}
+              />
+              <View
+                style={[
+                  styles.titleBottomHair,
+                  mode === 'dark' && { backgroundColor: 'rgba(255,255,255,0.18)' },
+                ]}
+              />
               <LinearGradient
-                colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.5)']}
+                colors={
+                  mode === 'dark'
+                    ? ['rgba(20,28,48,0)', 'rgba(20,28,48,0.55)']
+                    : ['rgba(255,255,255,0)', 'rgba(255,255,255,0.5)']
+                }
                 start={{ x: 0.5, y: 0 }}
                 end={{ x: 0.5, y: 1 }}
                 style={styles.titleFade}

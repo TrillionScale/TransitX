@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { radius, space } from '../../theme';
 import { BlurFill } from './BlurFill';
+import { useThemeMode } from '../../state/useThemeMode';
 
 type Props = {
   title?: string;
@@ -15,6 +16,12 @@ type Props = {
 
 export const ScreenHeader: React.FC<Props> = ({ title, kicker, logo, left, right }) => {
   const showCenter = logo || title || kicker;
+  const { mode } = useThemeMode();
+  const isDark = mode === 'dark';
+
+  const titleColor = isDark ? '#F5F7FF' : '#0A0E1A';
+  const kickerColor = isDark ? 'rgba(245,247,255,0.6)' : 'rgba(20,24,34,0.55)';
+  const wordmarkColor = isDark ? '#F5F7FF' : '#0A1840';
 
   return (
     <View style={styles.header}>
@@ -24,27 +31,37 @@ export const ScreenHeader: React.FC<Props> = ({ title, kicker, logo, left, right
         <View style={styles.centerWrap}>
           <View style={styles.shadow}>
             <View style={styles.capsule}>
-              {/* 유리 배경 */}
+              {/* 유리 배경 — 다크에서도 살짝 밝게 (텍스트 가독성 위해) */}
               <BlurFill
                 intensity={30}
-                tint="light"
+                tint={isDark ? 'dark' : 'light'}
                 style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]}
               />
-              <View pointerEvents="none" style={styles.tint} />
-              <View pointerEvents="none" style={styles.border} />
-              <View pointerEvents="none" style={styles.hairlineTop} />
+              <View
+                pointerEvents="none"
+                style={[
+                  styles.tint,
+                  isDark && { backgroundColor: 'rgba(255,255,255,0.10)' },
+                ]}
+              />
+              <View
+                pointerEvents="none"
+                style={[
+                  styles.border,
+                  isDark && { borderColor: 'rgba(255,255,255,0.22)' },
+                ]}
+              />
+              <View
+                pointerEvents="none"
+                style={[
+                  styles.hairlineTop,
+                  isDark && { backgroundColor: 'rgba(255,255,255,0.45)' },
+                ]}
+              />
 
               {logo ? (
                 /* ── TRANSITX 로고 모드 ── */
                 <View style={styles.logoWrap}>
-                  {/* 로고 배경 그라디언트 */}
-                  <LinearGradient
-                    colors={['rgba(40,90,220,0.18)', 'rgba(20,50,160,0.10)', 'transparent']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={StyleSheet.absoluteFill}
-                    pointerEvents="none"
-                  />
                   {/* TX 아이콘 마크 */}
                   <View style={styles.txMark}>
                     <LinearGradient
@@ -56,13 +73,19 @@ export const ScreenHeader: React.FC<Props> = ({ title, kicker, logo, left, right
                     <Text style={styles.txMarkText}>TX</Text>
                   </View>
                   {/* 워드마크 */}
-                  <Text style={styles.logoWordmark}>TRANSITX</Text>
+                  <Text style={[styles.logoWordmark, { color: wordmarkColor }]}>
+                    Transit<Text style={styles.logoX}>X</Text>
+                  </Text>
                 </View>
               ) : (
                 /* ── 일반 텍스트 모드 ── */
                 <View style={styles.content}>
-                  {kicker && <Text style={styles.kicker}>{kicker}</Text>}
-                  {title && <Text style={styles.title} numberOfLines={1}>{title}</Text>}
+                  {kicker && <Text style={[styles.kicker, { color: kickerColor }]}>{kicker}</Text>}
+                  {title && (
+                    <Text style={[styles.title, { color: titleColor }]} numberOfLines={1}>
+                      {title}
+                    </Text>
+                  )}
                 </View>
               )}
             </View>
@@ -155,15 +178,19 @@ const styles = StyleSheet.create({
   txMarkText: {
     color: '#FFFFFF',
     fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    fontFamily: 'Unbounded-Black',
+    fontWeight: '700',
+    letterSpacing: -0.3,
+    fontFamily: Platform.select({ ios: 'SF Pro Display', android: 'sans-serif' }),
   },
   logoWordmark: {
-    fontFamily: 'Unbounded-Black',
-    fontSize: 13,
-    letterSpacing: 0.3,
-    color: '#0A1840',
+    fontFamily: Platform.select({ ios: 'SF Pro Display', android: 'sans-serif' }),
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+  logoX: {
+    fontWeight: '800',
+    letterSpacing: 0,
   },
 
   // ── 일반 텍스트 모드 ───────────────────────────────────────────

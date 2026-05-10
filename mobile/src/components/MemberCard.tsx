@@ -5,6 +5,7 @@ import { Snowflake, Activity } from 'lucide-react-native';
 import { Member } from '../types';
 import { accentForCard, radius, space } from '../theme';
 import { shortAddr, formatAmount } from '../format';
+import { useThemeMode } from '../state/useThemeMode';
 
 type Props = {
   member: Member;
@@ -30,6 +31,8 @@ export const MemberCard: React.FC<Props> = ({ member, onPress }) => {
   const hasLimit = member.dailyLimitKrw > 0;
   const limitPct = hasLimit ? Math.min(member.spentTodayKrw / member.dailyLimitKrw, 1) : 0;
   const isOverLimit = hasLimit && member.spentTodayKrw >= member.dailyLimitKrw;
+  const { mode } = useThemeMode();
+  const isDark = mode === 'dark';
 
   const accentMid  = hexToRgba(accent, 0.80);
   const accentFade = hexToRgba(accent, 0.0);
@@ -39,7 +42,13 @@ export const MemberCard: React.FC<Props> = ({ member, onPress }) => {
       onPress={onPress}
       style={({ pressed }) => [
         styles.wrap,
-        { shadowColor: accent, shadowOpacity: 0.50, shadowRadius: 24, shadowOffset: { width: 0, height: 6 }, elevation: 12 },
+        {
+          shadowColor: accent,
+          shadowOpacity: isDark ? 0.45 : 0.50,
+          shadowRadius: isDark ? 18 : 24,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 8,
+        },
         pressed && { transform: [{ scale: 0.97 }] },
       ]}
     >
@@ -51,9 +60,13 @@ export const MemberCard: React.FC<Props> = ({ member, onPress }) => {
           start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
-        {/* Accent tint overlay */}
+        {/* Accent tint overlay — 다크모드에선 채도 더 강하게 */}
         <LinearGradient
-          colors={[hexToRgba(accent, 0.22), hexToRgba(accent, 0.06), 'transparent']}
+          colors={[
+            hexToRgba(accent, isDark ? 0.85 : 0.22),
+            hexToRgba(accent, isDark ? 0.55 : 0.06),
+            hexToRgba(accent, isDark ? 0.30 : 0),
+          ]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
@@ -87,16 +100,33 @@ export const MemberCard: React.FC<Props> = ({ member, onPress }) => {
 
           {/* Top row: MEMBER chip + status badge */}
           <View style={styles.topRow}>
-            <View style={[styles.kindChip, { borderColor: hexToRgba(accent, 0.50), backgroundColor: hexToRgba(accent, 0.12) }]}>
+            <View
+              style={[
+                styles.kindChip,
+                isDark
+                  ? { borderColor: hexToRgba(accent, 0.55), backgroundColor: 'rgba(8,12,24,0.85)' }
+                  : { borderColor: hexToRgba(accent, 0.50), backgroundColor: hexToRgba(accent, 0.12) },
+              ]}
+            >
               <Text style={[styles.kindText, { color: accent }]}>MEMBER</Text>
             </View>
             {isFrozen ? (
-              <View style={styles.frozenChip}>
+              <View
+                style={[
+                  styles.frozenChip,
+                  isDark && { backgroundColor: 'rgba(8,12,24,0.85)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(136,204,255,0.5)' },
+                ]}
+              >
                 <Snowflake size={8} color="#88CCFF" strokeWidth={2.5} />
                 <Text style={styles.frozenText}>FROZEN</Text>
               </View>
             ) : isActive ? (
-              <View style={styles.activeChip}>
+              <View
+                style={[
+                  styles.activeChip,
+                  isDark && { backgroundColor: 'rgba(8,12,24,0.85)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(94,231,168,0.5)' },
+                ]}
+              >
                 <View style={styles.activePulse} />
                 <Activity size={8} color="#5EE7A8" strokeWidth={2.5} />
                 <Text style={styles.activeText}>사용중</Text>

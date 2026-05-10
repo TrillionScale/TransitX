@@ -39,9 +39,9 @@ export const CardItem: React.FC<Props> = ({ card, onPress, variant = 'list' }) =
         isPortrait ? styles.wrapPortrait : isCredit ? styles.wrapCredit : styles.wrap,
         {
           shadowColor: '#1A4ADF',
-          shadowOpacity: 0.72,
-          shadowRadius: 32,
-          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.45,
+          shadowRadius: 60,
+          shadowOffset: { width: 0, height: 12 },
           elevation: 14,
         },
         pressed && { transform: [{ scale: 0.982 }], opacity: 0.93 },

@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Carousel from 'react-native-reanimated-carousel';
 import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
 import {
   Globe, Zap, DollarSign, ChevronRight, ArrowLeftRight,
   Send, RefreshCw, CreditCard, Shield, Users, Network,
@@ -22,7 +23,7 @@ import { CardItem } from '../components/CardItem';
 import { TxRow } from '../components/TxRow';
 import { useCards } from '../state/useCards';
 import { useTxHistory } from '../state/useTxHistory';
-import { useThemeMode } from '../state/useThemeMode';
+import { useDynamicColors, useThemeMode } from '../state/useThemeMode';
 import { RootStackParamList } from '../navigation';
 import { colors, radius, space } from '../theme';
 import { Screen, ScreenHeader, BlurFill, DarkGlass } from '../components/ui';
@@ -84,6 +85,7 @@ export const CardListScreen: React.FC = () => {
   const [selectedCcy, setSelectedCcy] = useState('KRW');
   const navigation = useNavigation<Nav>();
   const { mode, toggle } = useThemeMode();
+  const dyn = useDynamicColors();
   const { width: WIN_W } = useWindowDimensions();
 
   const containerW = Platform.OS === 'web' ? Math.min(WIN_W, MAX_PHONE_W) : WIN_W;
@@ -209,17 +211,30 @@ export const CardListScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* ── 스크롤 콘텐츠 ── */}
-          <ScrollView
+          {/* ── 스크롤 콘텐츠 — 위/아래 alpha mask로 자연스럽게 사라짐 ── */}
+          <MaskedView
             style={styles.scrollContent}
+            maskElement={
+              <LinearGradient
+                colors={['transparent', '#000', '#000', 'transparent']}
+                locations={[0, 0.04, 0.92, 1]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+            }
+          >
+          <ScrollView
             contentContainerStyle={styles.scrollPad}
             showsVerticalScrollIndicator={false}
           >
             {/* 초고속 환전 섹션 */}
             <View style={styles.sectionHead}>
               <View>
-                <Text style={styles.sectionTitle}>초고속 환전</Text>
-                <Text style={styles.sectionSub}>국가별 통화 즉시 변환 · 평균 0.3초</Text>
+                <Text style={[styles.sectionTitle, { color: dyn.textOnLight }]}>초고속 환전</Text>
+                <Text style={[styles.sectionSub, { color: dyn.textOnLightMuted }]}>
+                  국가별 통화 즉시 변환 · 평균 0.3초
+                </Text>
               </View>
               <View style={styles.liveBadge}>
                 <View style={styles.liveDot} />
@@ -227,7 +242,19 @@ export const CardListScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* 통화 선택 칩 */}
+            {/* 통화 선택 칩 — 좌우 alpha mask 페이드 */}
+            <MaskedView
+              style={styles.ccyMaskWrap}
+              maskElement={
+                <LinearGradient
+                  colors={['transparent', '#000', '#000', 'transparent']}
+                  locations={[0, 0.05, 0.85, 1]}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              }
+            >
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -249,15 +276,37 @@ export const CardListScreen: React.FC = () => {
                       />
                     )}
                     {!active && (
-                      <BlurFill intensity={20} tint="light" style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />
+                      <BlurFill
+                        intensity={20}
+                        tint={mode === 'dark' ? 'dark' : 'light'}
+                        style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]}
+                      />
+                    )}
+                    {!active && mode === 'dark' && (
+                      <View
+                        pointerEvents="none"
+                        style={[
+                          StyleSheet.absoluteFill,
+                          { borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.08)' },
+                        ]}
+                      />
                     )}
                     <View pointerEvents="none" style={[styles.ccyChipBorder, active && styles.ccyChipBorderActive]} />
                     <Text style={styles.ccyFlag}>{curr.flag}</Text>
-                    <Text style={[styles.ccyCode, active && styles.ccyCodeActive]}>{curr.code}</Text>
+                    <Text
+                      style={[
+                        styles.ccyCode,
+                        !active && mode === 'dark' && { color: 'rgba(245,247,255,0.85)' },
+                        active && styles.ccyCodeActive,
+                      ]}
+                    >
+                      {curr.code}
+                    </Text>
                   </Pressable>
                 );
               })}
             </ScrollView>
+            </MaskedView>
 
             {/* 환율 변환 디스플레이 */}
             <DarkGlass radius="lg" style={styles.fxCard}>
@@ -300,8 +349,10 @@ export const CardListScreen: React.FC = () => {
             {/* 글로벌 커버리지 */}
             <View style={styles.sectionHead}>
               <View>
-                <Text style={styles.sectionTitle}>글로벌 대중교통</Text>
-                <Text style={styles.sectionSub}>하나의 카드로 전 세계 교통망 이용</Text>
+                <Text style={[styles.sectionTitle, { color: dyn.textOnLight }]}>글로벌 대중교통</Text>
+                <Text style={[styles.sectionSub, { color: dyn.textOnLightMuted }]}>
+                  하나의 카드로 전 세계 교통망 이용
+                </Text>
               </View>
               <View style={styles.covBadge}>
                 <LinearGradient
@@ -313,28 +364,71 @@ export const CardListScreen: React.FC = () => {
               </View>
             </View>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.cityScroll}
+            <MaskedView
+              style={styles.cityScrollWrap}
+              maskElement={
+                <LinearGradient
+                  colors={['transparent', '#000', '#000', 'transparent']}
+                  locations={[0, 0.05, 0.85, 1]}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              }
             >
-              {CITIES.map(({ flag, city, network }) => (
-                <View key={city} style={styles.cityCard}>
-                  <BlurFill intensity={25} tint="light" style={[StyleSheet.absoluteFill, { borderRadius: radius.lg }]} />
-                  <View pointerEvents="none" style={styles.cityCardTint} />
-                  <View pointerEvents="none" style={styles.cityCardBorder} />
-                  <Text style={styles.cityFlag}>{flag}</Text>
-                  <Text style={styles.cityName}>{city}</Text>
-                  <Text style={styles.cityNetwork}>{network}</Text>
-                </View>
-              ))}
-            </ScrollView>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.cityScroll}
+              >
+                {CITIES.map(({ flag, city, network }) => (
+                  <View key={city} style={styles.cityCard}>
+                    <BlurFill
+                      intensity={25}
+                      tint={mode === 'dark' ? 'dark' : 'light'}
+                      style={[StyleSheet.absoluteFill, { borderRadius: radius.lg }]}
+                    />
+                    <View
+                      pointerEvents="none"
+                      style={[
+                        styles.cityCardTint,
+                        mode === 'dark' && { backgroundColor: 'rgba(255,255,255,0.10)' },
+                      ]}
+                    />
+                    <View
+                      pointerEvents="none"
+                      style={[
+                        styles.cityCardBorder,
+                        mode === 'dark' && { borderColor: 'rgba(255,255,255,0.22)' },
+                      ]}
+                    />
+                    <Text style={styles.cityFlag}>{flag}</Text>
+                    <Text
+                      style={[
+                        styles.cityName,
+                        mode === 'dark' && { color: '#F5F7FF' },
+                      ]}
+                    >
+                      {city}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.cityNetwork,
+                        mode === 'dark' && { color: 'rgba(245,247,255,0.55)' },
+                      ]}
+                    >
+                      {network}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </MaskedView>
 
             {/* 최근 거래 내역 */}
             {recentTxs.length > 0 && (
               <>
                 <View style={styles.sectionHead}>
-                  <Text style={styles.sectionTitle}>최근 사용 내역</Text>
+                  <Text style={[styles.sectionTitle, { color: dyn.textOnLight }]}>최근 사용 내역</Text>
                   <Pressable
                     onPress={() => activeCard && navigation.navigate('CardDetail', { cardId: activeCard.id })}
                     style={({ pressed }) => [styles.seeAllBtn, pressed && { opacity: 0.6 }]}
@@ -354,14 +448,37 @@ export const CardListScreen: React.FC = () => {
               </>
             )}
           </ScrollView>
+          </MaskedView>
 
           {/* ── 하단 액션 바 (5 pictogram buttons) ── */}
           <View style={styles.actionBarWrap}>
             <View style={styles.actionBar}>
-              <BlurFill intensity={40} tint="light" style={[StyleSheet.absoluteFill, { borderRadius: 28 }]} />
-              <View pointerEvents="none" style={styles.abTint} />
-              <View pointerEvents="none" style={styles.abBorder} />
-              <View pointerEvents="none" style={styles.abHair} />
+              <BlurFill
+                intensity={40}
+                tint={mode === 'dark' ? 'dark' : 'light'}
+                style={[StyleSheet.absoluteFill, { borderRadius: 28 }]}
+              />
+              <View
+                pointerEvents="none"
+                style={[
+                  styles.abTint,
+                  mode === 'dark' && { backgroundColor: 'rgba(20,28,48,0.55)' },
+                ]}
+              />
+              <View
+                pointerEvents="none"
+                style={[
+                  styles.abBorder,
+                  mode === 'dark' && { borderColor: 'rgba(255,255,255,0.18)' },
+                ]}
+              />
+              <View
+                pointerEvents="none"
+                style={[
+                  styles.abHair,
+                  mode === 'dark' && { backgroundColor: 'rgba(255,255,255,0.35)' },
+                ]}
+              />
 
               <PictoBtn
                 icon={RefreshCw}   bgIcon={Globe}
@@ -509,7 +626,8 @@ const styles = StyleSheet.create({
   liveBadgeText: { color: '#5EE7A8', fontSize: 10, fontWeight: '700' },
 
   // ── 통화 선택 ──────────────────────────────────────────────────
-  ccyScroll: { gap: space.sm, paddingRight: space.lg },
+  ccyMaskWrap: { marginBottom: space.md },
+  ccyScroll: { gap: space.sm, paddingLeft: space.sm, paddingRight: space.xxl * 1.2 },
   ccyChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     borderRadius: radius.pill, overflow: 'hidden',
@@ -537,7 +655,7 @@ const styles = StyleSheet.create({
     fontSize: 10, fontWeight: '700', letterSpacing: 1.2,
     textTransform: 'uppercase', marginBottom: 2,
   },
-  fxAmount: { color: colors.textOnGlass, fontSize: 22, fontWeight: '800', letterSpacing: -0.6 },
+  fxAmount: { color: colors.textOnGlass, fontSize: 22, fontWeight: '600', letterSpacing: -0.4 },
   fxArrow: { alignItems: 'center', gap: 3 },
   fxSpeedTag: { color: '#5EE7A8', fontSize: 9, fontWeight: '700', letterSpacing: 0.3 },
   fxRateRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -551,7 +669,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(123,149,244,0.35)',
   },
   covBadgeText: { color: colors.primary, fontSize: 11, fontWeight: '700' },
-  cityScroll: { gap: space.sm, paddingRight: space.lg },
+  cityScrollWrap: { position: 'relative' },
+  cityScroll: { gap: space.sm, paddingLeft: space.sm, paddingRight: space.xxl * 1.5 },
   cityCard: {
     width: 90, borderRadius: radius.lg, overflow: 'hidden',
     paddingVertical: 12, paddingHorizontal: 10, alignItems: 'center', gap: 4,
