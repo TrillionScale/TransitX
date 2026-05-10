@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Linking,
   Pressable,
   StyleSheet,
@@ -27,6 +28,7 @@ import { usePaymentFlow } from '../state/usePaymentFlow';
 import { RootStackParamList } from '../navigation';
 import { colors, font, radius, space } from '../theme';
 import { formatAmount } from '../format';
+import { waitForNfcTap, cancelNfc } from '../nfc';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Pay'>;
 
@@ -38,11 +40,34 @@ export const PayScreen: React.FC<Props> = ({ route, navigation }) => {
   const card = cards.find((c) => c.id === cardId);
   const flow = usePaymentFlow(cardId);
 
-  // mock 모드: 화면 진입 1.2초 후 자동으로 결제 시작 (NFC 태그 감지 흉내)
-  // 실제 NFC 모드에선 nfc.startNfcSession(flow.start)로 대체
+  // 화면 진입 시 진짜 NFC 세션 시작. 태그 감지되면 테스트 alert → mock 결제 flow.
+  // 실패(시뮬레이터/권한/타임아웃)면 1.2초 후 mock으로 fallback.
   useEffect(() => {
-    const t = setTimeout(() => flow.start(), 1200);
-    return () => clearTimeout(t);
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        await waitForNfcTap();
+        if (cancelled) return;
+        Alert.alert(
+          'NFC 테스트 성공',
+          '(완성 시 이 팝업을 지웁시다)',
+          [{ text: '결제 진행', onPress: () => flow.start() }],
+        );
+      } catch {
+        if (cancelled) return;
+        // NFC 안 됨 → mock fallback
+        setTimeout(() => {
+          if (!cancelled) flow.start();
+        }, 1200);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+      cancelNfc();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
