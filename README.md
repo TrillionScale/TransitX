@@ -2,7 +2,7 @@
 
 > AI-powered borderless transit, payment & FX infrastructure on XRPL.
 
-외국인이 현지 교통·금융을 이용할 때 겪는 구조적 마찰을 제거하기 위해 설계된 글로벌 모빌리티·결제 인프라입니다. **Korea Financial Innovation Program 2026** 출품작.
+외국인이 현지 교통·금융을 이용할 때 겪는 구조적 마찰을 제거하기 위해 설계된 글로벌 모빌리티·결제 인프라입니다.
 
 ---
 
