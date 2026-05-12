@@ -1,5 +1,25 @@
 {
   "name": "transitx",
   "private": true,
-  "_comment": "루트는 빈 컨테이너. 모든 의존성은 mobile/package.json에. workspaces는 packages/xrpl-core 추가 시점에 다시 결정."
+  "_comment": "루트는 packages/xrpl-core(공유 라이브러리)와 scripts(testnet 셋업)만 관리. mobile/은 standalone Expo 프로젝트로 metro watchFolders 통해 packages/를 참조한다.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "setup:1": "tsx scripts/01-create-issuers.ts",
+    "setup:2": "tsx scripts/02-set-default-ripple.ts",
+    "setup:3": "tsx scripts/03-create-user.ts",
+    "setup:4": "tsx scripts/04-issue-liquidity.ts",
+    "setup:5": "tsx scripts/05-seed-orderbook.ts",
+    "setup:6": "tsx scripts/06-verify-path.ts",
+    "setup:all": "npm run setup:1 && npm run setup:2 && npm run setup:3 && npm run setup:4 && npm run setup:5 && npm run setup:6"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "xrpl": "^4.6.0"
+  }
 }
