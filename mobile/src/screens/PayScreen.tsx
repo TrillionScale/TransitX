@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Check, X, Nfc } from 'lucide-react-native';
+import { Check, X, Nfc, ArrowRightLeft } from 'lucide-react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -131,6 +131,14 @@ const PhaseContent: React.FC<PhaseProps> = ({ flow, card }) => {
       return <NfcWaiting />;
     case 'quoting':
       return <Quoting />;
+    case 'exchanging':
+      return (
+        <Exchanging
+          krwAmount={flow.krwAmount}
+          usdAmount={flow.quote?.sendMaxUsd ?? 0}
+          rate={flow.quote?.rate ?? 0}
+        />
+      );
     case 'submitting':
       return <Submitting krwAmount={flow.krwAmount} usdAmount={flow.quote?.sendMaxUsd ?? 0} />;
     case 'success':
@@ -188,9 +196,46 @@ const Quoting: React.FC = () => (
       </MetalChip>
     </View>
     <Text style={[styles.statusTitle, { marginTop: space.xl }]}>환율 확인 중</Text>
-    <Text style={styles.statusSub}>최적 경로를 찾고 있습니다</Text>
+    <Text style={styles.statusSub}>XRPL DEX에서 최적 경로 탐색</Text>
   </View>
 );
+
+// USD → KRW 환전 단계 — 실제 견적 숫자로 시각화. 화살표가 좌우로 펄스.
+const Exchanging: React.FC<{ krwAmount: number; usdAmount: number; rate: number }> = ({
+  krwAmount,
+  usdAmount,
+  rate,
+}) => {
+  const t = useSharedValue(0);
+  useEffect(() => {
+    t.value = withRepeat(withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) }), -1, true);
+  }, [t]);
+  const arrowStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: (t.value - 0.5) * 14 }],
+    opacity: 0.55 + t.value * 0.45,
+  }));
+  return (
+    <View style={styles.statusInner}>
+      <View style={styles.fxRow}>
+        <View style={styles.fxPill}>
+          <Text style={styles.fxCcy}>USD</Text>
+          <Text style={styles.fxAmt}>{formatAmount(usdAmount, 'USD')}</Text>
+        </View>
+        <Animated.View style={arrowStyle}>
+          <ArrowRightLeft size={26} color={colors.primary} strokeWidth={2.4} />
+        </Animated.View>
+        <View style={styles.fxPill}>
+          <Text style={styles.fxCcy}>KRW</Text>
+          <Text style={styles.fxAmt}>{formatAmount(krwAmount, 'KRW')}</Text>
+        </View>
+      </View>
+      <Text style={[styles.statusTitle, { marginTop: space.xl }]}>환전 중…</Text>
+      <Text style={styles.statusSub}>
+        달러를 원화로 자동 환전 · 1 USD = ₩{rate ? rate.toFixed(0) : '—'}
+      </Text>
+    </View>
+  );
+};
 
 const Submitting: React.FC<{ krwAmount: number; usdAmount: number }> = ({
   krwAmount,
@@ -201,7 +246,7 @@ const Submitting: React.FC<{ krwAmount: number; usdAmount: number }> = ({
     <Text style={styles.approxUsd}>≈ {formatAmount(usdAmount, 'USD')}</Text>
     <View style={styles.submittingRow}>
       <ActivityIndicator color={colors.text} size="small" />
-      <Text style={styles.submittingText}>결제 처리 중…</Text>
+      <Text style={styles.submittingText}>XRPL에 결제 전송 중…</Text>
     </View>
   </View>
 );
@@ -338,6 +383,37 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.18)',
     backgroundColor: 'rgba(255,255,255,0.02)',
+  },
+
+  // 환전 단계 — USD ↔ KRW 칩 + 화살표
+  fxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.lg,
+  },
+  fxPill: {
+    alignItems: 'center',
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+    borderRadius: radius.lg,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.16)',
+    minWidth: 110,
+  },
+  fxCcy: {
+    color: 'rgba(140,185,255,0.7)',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.6,
+    marginBottom: 3,
+  },
+  fxAmt: {
+    color: colors.text,
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
 
   // 결제 진행 중 큰 금액 표시

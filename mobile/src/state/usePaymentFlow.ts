@@ -11,7 +11,8 @@ const DEMO_MERCHANT = '서울 지하철 2호선'; // 1500원 = 지하철 1회
 export type PaymentPhase =
   | 'idle'         // 화면 진입, NFC 대기
   | 'tagDetected'  // 태그 감지 → 견적 요청 시작
-  | 'quoting'      // ripple_path_find 진행 중
+  | 'quoting'      // ripple_path_find 진행 중 (최적 경로 탐색)
+  | 'exchanging'   // USD → KRW 환전 진행 (시각적 단계 — 견적 받은 직후)
   | 'submitting'   // Payment 트랜잭션 제출 중
   | 'success'      // tesSUCCESS
   | 'error';       // 어디서든 실패
@@ -48,6 +49,10 @@ export function usePaymentFlow(cardId: string) {
       setPhase('quoting');
       const q = await api.quote(KRW_AMOUNT);
       setQuote(q);
+
+      // 환전 단계 — 견적이 나온 직후 잠깐 "USD→KRW 환전 중"을 보여준다 (데모 가독성).
+      setPhase('exchanging');
+      await new Promise((r) => setTimeout(r, 900));
 
       setPhase('submitting');
       const r = await api.pay(cardId, q, KRW_AMOUNT);
