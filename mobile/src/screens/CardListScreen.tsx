@@ -96,6 +96,13 @@ export const CardListScreen: React.FC = () => {
   const { txs } = useTxHistory(activeCard?.id ?? '');
   const recentTxs = txs.slice(0, 4);
   const selectedCurrData = CURRENCIES.find(c => c.code === selectedCcy) ?? CURRENCIES[0];
+  // FX 위젯은 USD 기준 — 카드 잔액이 KRW면 USD로 환산해서 넣는다.
+  const KRW_PER_USD = CURRENCIES.find(c => c.code === 'KRW')!.perUsd;
+  const activeBalanceUsd = activeCard
+    ? activeCard.currency === 'KRW'
+      ? activeCard.balanceUsd / KRW_PER_USD
+      : activeCard.balanceUsd
+    : 0;
 
   return (
     <Screen>
@@ -320,7 +327,7 @@ export const CardListScreen: React.FC = () => {
                 <View style={styles.fxSide}>
                   <Text style={styles.fxCurrLabel}>USD</Text>
                   <Text style={styles.fxAmount}>
-                    ${activeCard ? activeCard.balanceUsd.toFixed(2) : '0.00'}
+                    ${activeBalanceUsd.toFixed(2)}
                   </Text>
                 </View>
                 <View style={styles.fxArrow}>
@@ -332,7 +339,7 @@ export const CardListScreen: React.FC = () => {
                     {selectedCcy}
                   </Text>
                   <Text style={[styles.fxAmount, { color: '#5EE7A8' }]}>
-                    {activeCard ? fmtConverted(activeCard.balanceUsd, selectedCurrData) : '--'}
+                    {activeCard ? fmtConverted(activeBalanceUsd, selectedCurrData) : '--'}
                   </Text>
                 </View>
               </View>
@@ -490,7 +497,7 @@ export const CardListScreen: React.FC = () => {
                 icon={Zap}         bgIcon={CreditCard}
                 label="충전"      labelColor="#008A50"
                 gradColors={['#30E090', '#00B870', '#009050']}
-                onPress={() => navigation.navigate('Pay', { cardId: activeCard?.id ?? '' })}
+                onPress={() => navigation.navigate('Wallet')}
               />
               <SendPictoBtn onPress={() => navigation.navigate('Send')} />
               <PictoBtn

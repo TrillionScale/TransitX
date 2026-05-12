@@ -1,9 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ExternalLink } from 'lucide-react-native';
 import { Tx } from '../types';
 import { colors, radius, space } from '../theme';
 import { formatAmount, fullDateTime, shortAddr } from '../format';
 import { BlurFill } from './ui';
+
+const EXPLORER_TX = 'https://testnet.xrpl.org/transactions/';
 
 type Props = {
   tx: Tx;
@@ -49,7 +52,11 @@ const ICON_SIZE = 42;
 export const TxRow: React.FC<Props> = ({ tx, showSigner }) => {
   const { emoji, color } = resolveIcon(tx.merchant);
 
-  return (
+  const openExplorer = () => {
+    Linking.openURL(EXPLORER_TX + tx.hash).catch(() => {});
+  };
+
+  const content = (
     <View style={styles.row}>
       {/* 아이콘 — 머천트별 색상 + 이모지 */}
       <View style={[styles.iconWrap, { shadowColor: color === '#1A3A6C' ? '#4A7AFF' : '#000' }]}>
@@ -67,21 +74,48 @@ export const TxRow: React.FC<Props> = ({ tx, showSigner }) => {
       </View>
 
       <View style={styles.middle}>
-        <Text style={styles.merchant} numberOfLines={1}>
-          {tx.merchant}
-        </Text>
+        <View style={styles.merchantRow}>
+          <Text style={styles.merchant} numberOfLines={1}>
+            {tx.merchant}
+          </Text>
+          {tx.real && (
+            <View style={styles.liveBadge}>
+              <Text style={styles.liveBadgeText}>XRPL</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.sub} numberOfLines={1}>
           {fullDateTime(tx.timestamp)}
-          {showSigner && tx.signer ? ` · ${shortAddr(tx.signer)}` : ''}
+          {tx.real
+            ? ` · ${tx.hash.slice(0, 8)}…${tx.hash.slice(-4)}`
+            : showSigner && tx.signer
+              ? ` · ${shortAddr(tx.signer)}`
+              : ''}
         </Text>
       </View>
 
       <View style={styles.amounts}>
         <Text style={styles.amountKrw}>−{formatAmount(tx.amountKrw, 'KRW')}</Text>
-        <Text style={styles.amountUsd}>{formatAmount(tx.amountUsd, 'USD')}</Text>
+        {tx.real ? (
+          <View style={styles.explorerHint}>
+            <ExternalLink size={11} color={colors.primary} strokeWidth={2.2} />
+            <Text style={styles.explorerHintText}>Explorer</Text>
+          </View>
+        ) : (
+          <Text style={styles.amountUsd}>{formatAmount(tx.amountUsd, 'USD')}</Text>
+        )}
       </View>
     </View>
   );
+
+  if (tx.real) {
+    return (
+      <Pressable onPress={openExplorer} style={({ pressed }) => pressed && { opacity: 0.6 }}>
+        {content}
+      </Pressable>
+    );
+  }
+  return content;
 };
 
 const styles = StyleSheet.create({
@@ -127,12 +161,32 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  merchantRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+  },
   merchant: {
     color: colors.textOnGlass,
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.1,
-    marginBottom: 2,
+    flexShrink: 1,
+  },
+  liveBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(74,122,255,0.18)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(74,122,255,0.45)',
+  },
+  liveBadgeText: {
+    color: '#7DA0FF',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.6,
   },
   sub: {
     color: colors.textOnGlassFaint,
@@ -154,5 +208,17 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
     marginTop: 2,
+  },
+  explorerHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: 3,
+  },
+  explorerHintText: {
+    color: colors.primary,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
 });

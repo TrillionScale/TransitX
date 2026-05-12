@@ -31,6 +31,7 @@ export const CardItem: React.FC<Props> = ({ card, onPress, variant = 'list' }) =
   const isPortrait = variant === 'portrait';
   const last4 = cardLast4(card.address);
   const expiry = cardExpiry(card.address);
+  const balanceText = formatAmount(card.balanceUsd, card.currency ?? 'USD');
 
   return (
     <Pressable
@@ -150,7 +151,7 @@ export const CardItem: React.FC<Props> = ({ card, onPress, variant = 'list' }) =
 
               <View style={styles.balanceCenter}>
                 <Text style={styles.balanceLabelC}>BALANCE</Text>
-                <Text style={styles.balanceAmtC}>{formatAmount(card.balanceUsd, 'USD')}</Text>
+                <Text style={styles.balanceAmtC}>{balanceText}</Text>
               </View>
 
               <HoloOrb />
@@ -204,7 +205,7 @@ export const CardItem: React.FC<Props> = ({ card, onPress, variant = 'list' }) =
             <View style={styles.bottomPortrait}>
               <View style={styles.balanceRow}>
                 <Text style={styles.balanceLabelP}>BALANCE</Text>
-                <Text style={styles.balanceAmtP}>{formatAmount(card.balanceUsd, 'USD')}</Text>
+                <Text style={styles.balanceAmtP}>{balanceText}</Text>
               </View>
               <View style={styles.cardNumRow}>
                 {['••••', '••••', '••••', last4].map((g, i) => (

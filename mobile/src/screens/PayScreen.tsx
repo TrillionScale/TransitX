@@ -96,7 +96,7 @@ export const PayScreen: React.FC<Props> = ({ route, navigation }) => {
 
       {/* 카드 — 가운데 살짝 위에 */}
       <View style={styles.cardArea}>
-        <CardItem card={card} variant="large" />
+        <CardItem card={card} variant="list" />
       </View>
 
       {/* 상태 영역 — phase에 따라 컨텐츠 변경 */}
@@ -252,7 +252,7 @@ const SuccessFooter: React.FC<{
     <View style={styles.successDivider} />
     <Pressable
       onPress={() => {
-        if (hash.startsWith('0xMOCK')) return;
+        if (!/^[0-9A-F]{64}$/i.test(hash)) return; // mock 해시면 무시
         Linking.openURL(EXPLORER_BASE + hash);
       }}
       style={({ pressed }) => [styles.successRow, pressed && { opacity: 0.6 }]}

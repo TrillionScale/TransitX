@@ -2,11 +2,19 @@ import * as mock from './mocks';
 import {
   getOrCreateWallet,
   getXrpBalance,
+  getXrpKrwRate,
   quoteKrw,
   sendXrpPayment,
   MERCHANT_ADDRESS,
 } from './xrplClient';
 import { Card, Group, PayResult, Quote, Tx } from '../types';
+
+// 실제 testnet XRP 잔액을 KRW로 환산 (개인 카드/지갑 표시용).
+async function realWalletKrw(): Promise<{ address: string; balanceKrw: number }> {
+  const [wallet, rate] = await Promise.all([getOrCreateWallet(), getXrpKrwRate()]);
+  const xrp = await getXrpBalance(wallet.address);
+  return { address: wallet.address, balanceKrw: xrp * rate };
+}
 
 // mock 토글: false로 바꾸면 실제 XRPL 사용
 const MOCK = {
@@ -27,26 +35,36 @@ const MOCK = {
 // ─── public api ──────────────────────────────────────────────────
 
 export const api = {
+  // 지갑 패널: 실제 XRP를 KRW로 환산해서 보여준다.
   myWallet: async (): Promise<{ address: string; balanceUsd: number }> => {
     if (MOCK.myWallet) return mock.myWallet();
-    const wallet = await getOrCreateWallet();
-    const xrp = await getXrpBalance(wallet.address);
-    // XRP → USD 간단 환산 (표시용)
-    let xrpUsd = 0.5;
-    try {
-      const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd');
-      const d = await res.json();
-      xrpUsd = d.ripple.usd;
-    } catch { /* ignore */ }
-    return { address: wallet.address, balanceUsd: xrp * xrpUsd };
+    const { address, balanceKrw } = await realWalletKrw();
+    return { address, balanceUsd: balanceKrw }; // 필드명은 레거시 — 값은 KRW
   },
 
-  myCards: (): Promise<Card[]> =>
-    MOCK.myCards ? mock.myCards() : Promise.reject(new Error('not implemented')),
+  // 카드 목록: 개인 카드만 실제 XRP→KRW 잔액으로 덮어쓴다. 그룹 카드는 mock.
+  myCards: async (): Promise<Card[]> => {
+    const cards = await mock.myCards();
+    if (MOCK.myWallet) return cards;
+    try {
+      const { balanceKrw } = await realWalletKrw();
+      return cards.map((c) =>
+        c.kind === 'personal'
+          ? { ...c, balanceUsd: balanceKrw, currency: 'KRW' as const }
+          : c,
+      );
+    } catch {
+      return cards; // testnet 안 되면 mock 그대로
+    }
+  },
 
   balance: async (addr: string): Promise<number> => {
     if (MOCK.balance) return mock.balance(addr);
-    return getXrpBalance(addr);
+    if (addr === mock.MY_ADDR) {
+      const { balanceKrw } = await realWalletKrw();
+      return balanceKrw;
+    }
+    return mock.balance(addr); // 그룹 등은 mock
   },
 
   txHistory: (addr: string): Promise<Tx[]> =>

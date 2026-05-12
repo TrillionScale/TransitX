@@ -1,6 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
 import { api } from '../data/api';
+import { appendRealTx } from '../data/mocks';
 import { PayResult, Quote } from '../types';
+
+// XRPL Tx 해시는 64자리 hex. mock 해시('TX...')와 구분용.
+const isRealTxHash = (hash: string) => /^[0-9A-F]{64}$/i.test(hash);
+
+const DEMO_MERCHANT = '서울 지하철 2호선'; // 1500원 = 지하철 1회
 
 export type PaymentPhase =
   | 'idle'         // 화면 진입, NFC 대기
@@ -45,6 +51,19 @@ export function usePaymentFlow(cardId: string) {
 
       setPhase('submitting');
       const r = await api.pay(cardId, q, KRW_AMOUNT);
+
+      // 실제 XRPL 결제였다면 그 트랜잭션을 거래내역 맨 위에 꽂는다
+      // (mock pay는 자체적으로 txMap을 갱신하므로 중복 방지 차원에서 real만).
+      if (isRealTxHash(r.hash)) {
+        appendRealTx(cardId, {
+          hash: r.hash,
+          merchant: DEMO_MERCHANT,
+          amountKrw: KRW_AMOUNT,
+          amountUsd: q.sendMaxUsd,
+          rate: q.rate,
+        });
+      }
+
       setResult(r);
       setPhase('success');
     } catch (e) {

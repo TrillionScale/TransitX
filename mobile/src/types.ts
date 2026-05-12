@@ -3,7 +3,8 @@ export type Card = {
   kind: 'personal' | 'group';
   name: string;
   address: string;
-  balanceUsd: number;
+  balanceUsd: number;          // 표시 금액 (currency 단위) — 레거시 이름 유지
+  currency?: 'USD' | 'KRW';    // 미지정 시 USD
 };
 
 export type Tx = {
@@ -14,6 +15,7 @@ export type Tx = {
   amountUsd: number;
   rate: number;
   signer?: string;     // 그룹 카드일 때 누가 서명했는지
+  real?: boolean;      // 실제 XRPL testnet Tx — hash로 explorer 조회 가능
 };
 
 export type Member = {

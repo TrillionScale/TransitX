@@ -27,7 +27,7 @@ export async function getOrCreateWallet(): Promise<Wallet> {
 
   // 저장된 시드가 있으면 복원
   try {
-    const { AsyncStorage } = await import('@react-native-async-storage/async-storage');
+    const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
     const saved = await AsyncStorage.getItem(WALLET_KEY);
     if (saved) {
       _cachedWallet = Wallet.fromSeed(saved);
@@ -43,7 +43,7 @@ export async function getOrCreateWallet(): Promise<Wallet> {
   _cachedWallet = wallet;
 
   try {
-    const { AsyncStorage } = await import('@react-native-async-storage/async-storage');
+    const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
     await AsyncStorage.setItem(WALLET_KEY, wallet.seed!);
   } catch {
     // ignore
@@ -101,15 +101,17 @@ export async function getXrpKrwRate(): Promise<number> {
 
 // ─── 견적: KRW → XRP drops ───────────────────────────────────────
 
+const USD_KRW = 1370; // 데모용 고정 USD/KRW (≈ 표시값 계산)
+
 export async function quoteKrw(krw: number): Promise<Quote> {
-  const rate = await getXrpKrwRate();
+  const rate = await getXrpKrwRate(); // XRP/KRW
   const xrp = krw / rate;
   const xrpWithSlippage = xrp * 1.005; // 0.5% 슬리피지
   const drops = Math.ceil(xrpWithSlippage * 1_000_000).toString();
   return {
-    sendMaxUsd: krw / (rate / 1370), // USD 환산 표시용
+    sendMaxUsd: krw / USD_KRW, // USD 환산 표시용 (₩1,500 → ≈$1.09)
     rate,
-    paths: [{ drops }],              // drops를 paths에 넣어 전달
+    paths: [{ drops }],        // drops를 paths에 넣어 전달
   };
 }
 

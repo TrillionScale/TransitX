@@ -20,6 +20,7 @@ import * as Clipboard from 'expo-clipboard';
 
 import { RootStackParamList } from '../navigation';
 import { colors, radius, space } from '../theme';
+import { formatAmount } from '../format';
 import { useWallet } from '../state/useWallet';
 import { useTxHistory } from '../state/useTxHistory';
 import { isIdentityVerified, clearIdentityVerification } from '../state/useIdentity';
@@ -136,7 +137,7 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
               style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]}
             />
             <Text style={styles.balancePillText}>
-              $ {wallet ? wallet.balanceUsd.toFixed(2) : '0.00'}
+              {wallet ? formatAmount(wallet.balanceUsd, 'KRW') : '₩0'}
             </Text>
           </View>
         </View>

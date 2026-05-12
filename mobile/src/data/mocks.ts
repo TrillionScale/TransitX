@@ -3,7 +3,7 @@ import { Card, Group, Member, PayResult, Quote, Tx } from '../types';
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 // ─── 주소 상수 ───────────────────────────────────────────────────
-const MY_ADDR   = 'rKarin9xTX7mWpHJ2BqFsZ8dEuV4QNf1';
+export const MY_ADDR = 'rKarin9xTX7mWpHJ2BqFsZ8dEuV4QNf1';
 const GROUP1    = 'rAcmeCorpTravelPoolXXXX01';
 const GROUP2    = 'rTeamDinnerFundXXXXXXX02';
 
@@ -175,6 +175,26 @@ export const pay = async (from: string, q: Quote, krw: number): Promise<PayResul
   };
   txMap[from] = [tx, ...(txMap[from] ?? [])];
   return { hash: tx.hash, delivered: krw };
+};
+
+// 실제 XRPL 결제가 끝난 뒤 해당 카드(MY_ADDR 등)의 mock 거래내역 맨 위에 꽂는다.
+// hash는 testnet 실제 트랜잭션 해시 → TxRow에서 explorer 링크로 연결.
+export const appendRealTx = (
+  cardAddr: string,
+  tx: { hash: string; merchant: string; amountKrw: number; amountUsd: number; rate: number },
+): void => {
+  const entry: Tx = {
+    hash: tx.hash,
+    timestamp: Date.now(),
+    merchant: tx.merchant,
+    amountKrw: tx.amountKrw,
+    amountUsd: tx.amountUsd,
+    rate: tx.rate,
+    signer: cardAddr,
+    real: true,
+  };
+  txMap[cardAddr] = [entry, ...(txMap[cardAddr] ?? [])];
+  balances[cardAddr] = h((balances[cardAddr] ?? 0) - tx.amountUsd);
 };
 
 export const createGroup = async (name: string, usd: number): Promise<Group> => {

@@ -15,6 +15,7 @@ import { CardListScreen } from './src/screens/CardListScreen';
 import { CardDetailScreen } from './src/screens/CardDetailScreen';
 import { PayScreen } from './src/screens/PayScreen';
 import { SendScreen } from './src/screens/SendScreen';
+import { WalletScreen } from './src/screens/WalletScreen';
 import { WorkspaceScreen } from './src/screens/WorkspaceScreen';
 import { MemberDetailScreen } from './src/screens/MemberDetailScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
@@ -60,6 +61,11 @@ export default function App() {
               <Stack.Screen
                 name="Send"
                 component={SendScreen}
+                options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+              />
+              <Stack.Screen
+                name="Wallet"
+                component={WalletScreen}
                 options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
               />
               <Stack.Screen

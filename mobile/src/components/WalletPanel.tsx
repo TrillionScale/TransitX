@@ -42,9 +42,9 @@ export const WalletPanel: React.FC = () => {
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
       {/* 잔고 hero */}
       <View style={styles.hero}>
-        <Text style={[styles.heroLabel, { color: dyn.textOnLightMuted }]}>USD 잔고</Text>
+        <Text style={[styles.heroLabel, { color: dyn.textOnLightMuted }]}>원화 잔고</Text>
         <Text style={[styles.heroValue, { color: dyn.textOnLight }]}>
-          {formatAmount(wallet.balanceUsd, 'USD')}
+          {formatAmount(wallet.balanceUsd, 'KRW')}
         </Text>
         <Text style={[styles.heroSub, { color: dyn.textOnLightFaint }]}>
           XRPL Testnet · XRP 실시간 환산
@@ -87,7 +87,7 @@ export const WalletPanel: React.FC = () => {
       </DarkGlass>
 
       <Text style={[styles.footer, { color: dyn.textOnLightMuted }]}>
-        이 주소로 USD를 받으면 잔고에 자동으로 추가됩니다.
+        이 주소로 XRP를 받으면 잔고에 자동으로 추가됩니다. (XRPL Testnet)
       </Text>
 
       <DepositModal

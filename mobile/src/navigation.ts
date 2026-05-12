@@ -5,6 +5,7 @@ export type RootStackParamList = {
   CardDetail: { cardId: string };
   Pay: { cardId: string };
   Send: undefined;
+  Wallet: undefined;
   Workspace: { initialCardId?: string };
   MemberDetail: { groupId: string; memberAddr: string };
   Profile: undefined;
