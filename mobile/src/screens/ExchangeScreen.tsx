@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,75 +14,98 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ArrowLeft, CheckCircle, Send } from 'lucide-react-native';
+import { ArrowLeft, ArrowDownUp, CheckCircle, RefreshCw } from 'lucide-react-native';
 
 import { RootStackParamList } from '../navigation';
 import { colors, radius, space } from '../theme';
-import { getOrCreateWallet, getUsdBalance, sendUsd } from '../data/xrplClient';
 import { formatAmount } from '../format';
+import {
+  getWalletBalances,
+  quoteExchange,
+  executeExchange,
+  type ExchangeDir,
+  type ExchangeQuote,
+} from '../data/xrplClient';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Send'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'Exchange'>;
 
-type Phase = 'form' | 'loading' | 'confirm' | 'sending' | 'success' | 'error';
+type Phase = 'idle' | 'quoting' | 'confirm' | 'sending' | 'success' | 'error';
 
 const EXPLORER = 'https://testnet.xrpl.org/transactions/';
 
-export const SendScreen: React.FC<Props> = ({ navigation }) => {
-  const [phase, setPhase] = useState<Phase>('form');
-  const [toAddress, setToAddress] = useState('');
-  const [usdInput, setUsdInput] = useState('');
-  const [usdAmount, setUsdAmount] = useState<number | null>(null);
-  const [myUsd, setMyUsd] = useState<number | null>(null);
+export const ExchangeScreen: React.FC<Props> = ({ navigation }) => {
+  const [dir, setDir] = useState<ExchangeDir>('USD_TO_KRW');
+  const [amountInput, setAmountInput] = useState(''); // 받을 통화 기준 수량
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [bal, setBal] = useState<{ usd: number; krw: number; rate: number } | null>(null);
+  const [quote, setQuote] = useState<ExchangeQuote | null>(null);
   const [txHash, setTxHash] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleReview = useCallback(async () => {
-    const usd = parseFloat(usdInput.replace(/,/g, ''));
-    if (!usd || usd <= 0) {
-      Alert.alert('금액 오류', '0보다 큰 금액(USD)을 입력해주세요');
-      return;
-    }
-    if (!toAddress.startsWith('r') || toAddress.length < 25) {
-      Alert.alert('주소 오류', '올바른 XRPL 주소를 입력해주세요 (r로 시작)');
-      return;
-    }
-    setPhase('loading');
+  const recvCcy = dir === 'USD_TO_KRW' ? 'KRW' : 'USD';
+  const payCcy = dir === 'USD_TO_KRW' ? 'USD' : 'KRW';
+
+  const loadBalances = useCallback(async () => {
     try {
-      const wallet = await getOrCreateWallet();
-      const bal = await getUsdBalance(wallet.address);
-      setMyUsd(bal);
-      setUsdAmount(usd);
+      const b = await getWalletBalances();
+      setBal({ usd: b.usd, krw: b.krw, rate: b.rate });
+    } catch {
+      /* ignore — 잔액 표시는 보조 */
+    }
+  }, []);
+
+  useEffect(() => {
+    loadBalances();
+  }, [loadBalances]);
+
+  const handleQuote = useCallback(async () => {
+    const recv = parseFloat(amountInput.replace(/,/g, ''));
+    if (!recv || recv <= 0) {
+      Alert.alert('금액 오류', `받을 ${recvCcy} 수량을 입력해주세요`);
+      return;
+    }
+    setPhase('quoting');
+    try {
+      const q = await quoteExchange(dir, recv);
+      setQuote(q);
       setPhase('confirm');
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : '잔액 조회 실패');
+      setErrorMsg(e instanceof Error ? e.message : '환율 조회 실패');
       setPhase('error');
     }
-  }, [usdInput, toAddress]);
+  }, [amountInput, dir, recvCcy]);
 
-  const handleSend = useCallback(async () => {
-    if (usdAmount == null) return;
+  const handleExchange = useCallback(async () => {
+    if (!quote) return;
     setPhase('sending');
     try {
-      const result = await sendUsd(toAddress, usdAmount);
-      setTxHash(result.hash);
+      const r = await executeExchange(quote);
+      setTxHash(r.hash);
+      await loadBalances();
       setPhase('success');
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : '송금 실패');
+      setErrorMsg(e instanceof Error ? e.message : '환전 실패');
       setPhase('error');
     }
-  }, [usdAmount, toAddress]);
+  }, [quote, loadBalances]);
 
-  const reset = () => {
-    setPhase('form');
-    setToAddress('');
-    setUsdInput('');
-    setUsdAmount(null);
-    setMyUsd(null);
-    setTxHash('');
-    setErrorMsg('');
+  const swapDir = () => {
+    setDir((d) => (d === 'USD_TO_KRW' ? 'KRW_TO_USD' : 'USD_TO_KRW'));
+    setAmountInput('');
+    setQuote(null);
+    setPhase('idle');
   };
 
-  const insufficient = myUsd !== null && usdAmount !== null && myUsd < usdAmount;
+  const reset = () => {
+    setAmountInput('');
+    setQuote(null);
+    setTxHash('');
+    setErrorMsg('');
+    setPhase('idle');
+  };
+
+  const payBalance = bal ? (payCcy === 'USD' ? bal.usd : bal.krw) : 0;
+  const insufficient = quote ? payBalance < quote.payValue : false;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -91,33 +114,43 @@ export const SendScreen: React.FC<Props> = ({ navigation }) => {
           <Pressable hitSlop={12} style={styles.backBtn} onPress={() => navigation.goBack()}>
             <ArrowLeft size={20} color={colors.text} strokeWidth={2} />
           </Pressable>
-          <Text style={styles.headerTitle}>USD 송금</Text>
+          <Text style={styles.headerTitle}>환전</Text>
           <View style={{ width: 40 }} />
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          {(phase === 'form' || phase === 'loading') && (
-            <View style={styles.formCard}>
-              <Text style={styles.sectionLabel}>받는 주소</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="rXXXXXXXXXXXXXXXXXXXX…"
-                placeholderTextColor="rgba(255,255,255,0.25)"
-                value={toAddress}
-                onChangeText={setToAddress}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+          {/* 잔고 요약 */}
+          <View style={styles.balCard}>
+            <View style={styles.balRow}>
+              <Text style={styles.balLabel}>USD 잔고</Text>
+              <Text style={styles.balValue}>{bal ? formatAmount(bal.usd, 'USD') : '—'}</Text>
+            </View>
+            <View style={styles.balDivider} />
+            <View style={styles.balRow}>
+              <Text style={styles.balLabel}>KRW 잔고</Text>
+              <Text style={styles.balValue}>{bal ? formatAmount(bal.krw, 'KRW') : '—'}</Text>
+            </View>
+          </View>
 
-              <Text style={[styles.sectionLabel, { marginTop: space.lg }]}>금액 (USD)</Text>
+          {(phase === 'idle' || phase === 'quoting') && (
+            <View style={styles.formCard}>
+              <Text style={styles.dirLabel}>
+                {payCcy} → {recvCcy}
+              </Text>
+              <Pressable style={styles.swapBtn} onPress={swapDir} hitSlop={8}>
+                <ArrowDownUp size={16} color={colors.primary} strokeWidth={2.2} />
+                <Text style={styles.swapText}>방향 바꾸기</Text>
+              </Pressable>
+
+              <Text style={[styles.sectionLabel, { marginTop: space.lg }]}>받을 금액 ({recvCcy})</Text>
               <View style={styles.amountRow}>
-                <Text style={styles.currency}>$</Text>
+                <Text style={styles.currency}>{recvCcy === 'USD' ? '$' : '₩'}</Text>
                 <TextInput
                   style={[styles.input, { flex: 1 }]}
-                  placeholder="10.00"
+                  placeholder={recvCcy === 'USD' ? '100.00' : '100,000'}
                   placeholderTextColor="rgba(255,255,255,0.25)"
-                  value={usdInput}
-                  onChangeText={setUsdInput}
+                  value={amountInput}
+                  onChangeText={setAmountInput}
                   keyboardType="decimal-pad"
                 />
               </View>
@@ -126,37 +159,47 @@ export const SendScreen: React.FC<Props> = ({ navigation }) => {
                 style={({ pressed }) => [
                   styles.primaryBtn,
                   pressed && { opacity: 0.8 },
-                  phase === 'loading' && styles.primaryBtnDisabled,
+                  phase === 'quoting' && styles.primaryBtnDisabled,
                 ]}
-                onPress={handleReview}
-                disabled={phase === 'loading'}
+                onPress={handleQuote}
+                disabled={phase === 'quoting'}
               >
-                {phase === 'loading' ? (
+                {phase === 'quoting' ? (
                   <ActivityIndicator color="#000" size="small" />
                 ) : (
                   <>
-                    <Text style={styles.primaryBtnText}>다음</Text>
-                    <Send size={16} color="#000" strokeWidth={2.2} />
+                    <Text style={styles.primaryBtnText}>환율 확인</Text>
+                    <RefreshCw size={16} color="#000" strokeWidth={2.2} />
                   </>
                 )}
               </Pressable>
             </View>
           )}
 
-          {phase === 'confirm' && usdAmount !== null && (
+          {phase === 'confirm' && quote && (
             <View style={styles.formCard}>
-              <Text style={styles.confirmTitle}>송금 내역 확인</Text>
-              <Row label="받는 주소" value={`${toAddress.slice(0, 8)}…${toAddress.slice(-6)}`} mono />
+              <Text style={styles.confirmTitle}>환전 내역 확인</Text>
+              <Row
+                label="지불"
+                value={formatAmount(quote.payValue, payCcy as 'USD' | 'KRW')}
+              />
               <Divider />
-              <Row label="송금 금액" value={formatAmount(usdAmount, 'USD')} highlight />
+              <Row label="받음" value={formatAmount(quote.receiveValue, recvCcy as 'USD' | 'KRW')} highlight />
               <Divider />
-              <Row label="내 USD 잔고" value={formatAmount(myUsd ?? 0, 'USD')} />
+              <Row
+                label="적용 환율"
+                value={
+                  dir === 'USD_TO_KRW'
+                    ? `1 USD = ₩${(1 / quote.rate).toFixed(2)}`
+                    : `1 USD = ₩${quote.rate.toFixed(2)}`
+                }
+              />
               <Divider />
-              <Row label="자산" value="USD (XRPL IOU)" />
+              <Row label="경로" value="XRPL DEX (자가 결제)" />
               <Divider />
               <Row label="네트워크" value="XRPL Testnet" />
 
-              {insufficient && <Text style={styles.warningText}>⚠ USD 잔고 부족 — 환전/충전 후 다시 시도하세요</Text>}
+              {insufficient && <Text style={styles.warningText}>⚠ {payCcy} 잔고 부족</Text>}
 
               <View style={styles.confirmBtns}>
                 <Pressable style={({ pressed }) => [styles.ghostBtn, pressed && { opacity: 0.6 }]} onPress={reset}>
@@ -169,11 +212,10 @@ export const SendScreen: React.FC<Props> = ({ navigation }) => {
                     pressed && { opacity: 0.8 },
                     insufficient && styles.primaryBtnDisabled,
                   ]}
-                  onPress={handleSend}
+                  onPress={handleExchange}
                   disabled={insufficient}
                 >
-                  <Text style={styles.primaryBtnText}>송금하기</Text>
-                  <Send size={16} color="#000" strokeWidth={2.2} />
+                  <Text style={styles.primaryBtnText}>환전하기</Text>
                 </Pressable>
               </View>
             </View>
@@ -182,17 +224,18 @@ export const SendScreen: React.FC<Props> = ({ navigation }) => {
           {phase === 'sending' && (
             <View style={styles.stateCard}>
               <ActivityIndicator color={colors.primary} size="large" />
-              <Text style={styles.stateTitle}>XRPL에 제출 중…</Text>
-              <Text style={styles.stateSub}>블록 컨펌을 기다립니다 (3–5초)</Text>
+              <Text style={styles.stateTitle}>XRPL DEX에서 환전 중…</Text>
+              <Text style={styles.stateSub}>주문 체결을 기다립니다 (3–5초)</Text>
             </View>
           )}
 
-          {phase === 'success' && (
+          {phase === 'success' && quote && (
             <View style={styles.stateCard}>
               <CheckCircle size={64} color={colors.success} strokeWidth={1.5} />
-              <Text style={[styles.stateTitle, { color: colors.success }]}>송금 완료!</Text>
+              <Text style={[styles.stateTitle, { color: colors.success }]}>환전 완료!</Text>
               <Text style={styles.stateSub}>
-                {formatAmount(usdAmount ?? 0, 'USD')} → {toAddress.slice(0, 8)}…
+                {formatAmount(quote.payValue, payCcy as 'USD' | 'KRW')} →{' '}
+                {formatAmount(quote.receiveValue, recvCcy as 'USD' | 'KRW')}
               </Text>
               <Pressable
                 style={styles.hashCard}
@@ -207,7 +250,7 @@ export const SendScreen: React.FC<Props> = ({ navigation }) => {
                 style={({ pressed }) => [styles.primaryBtn, { marginTop: space.xl }, pressed && { opacity: 0.8 }]}
                 onPress={reset}
               >
-                <Text style={styles.primaryBtnText}>다시 송금</Text>
+                <Text style={styles.primaryBtnText}>다시 환전</Text>
               </Pressable>
             </View>
           )}
@@ -230,29 +273,19 @@ export const SendScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-// ─── 공통 서브컴포넌트 ────────────────────────────────────────────
-
-const Row: React.FC<{ label: string; value: string; mono?: boolean; highlight?: boolean }> = ({
-  label,
-  value,
-  mono,
-  highlight,
-}) => (
+const Row: React.FC<{ label: string; value: string; highlight?: boolean }> = ({ label, value, highlight }) => (
   <View style={row.container}>
     <Text style={row.label}>{label}</Text>
-    <Text style={[row.value, mono && row.mono, highlight && row.highlight]}>{value}</Text>
+    <Text style={[row.value, highlight && row.highlight]}>{value}</Text>
   </View>
 );
-
 const Divider: React.FC = () => (
   <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,0.10)' }} />
 );
-
 const row = StyleSheet.create({
   container: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14 },
   label: { color: 'rgba(255,255,255,0.55)', fontSize: 13, fontWeight: '500' },
   value: { color: '#F5F6F9', fontSize: 14, fontWeight: '600', letterSpacing: -0.2 },
-  mono: { fontFamily: 'Menlo', fontSize: 12 },
   highlight: { color: colors.primary, fontSize: 18, fontWeight: '700', letterSpacing: -0.4 },
 });
 
@@ -275,6 +308,17 @@ const styles = StyleSheet.create({
   },
   headerTitle: { color: colors.text, fontSize: 17, fontWeight: '700', letterSpacing: -0.3 },
   scroll: { padding: space.lg, gap: space.lg },
+  balCard: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.14)',
+    paddingHorizontal: space.lg,
+  },
+  balRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: space.md },
+  balLabel: { color: 'rgba(255,255,255,0.55)', fontSize: 13, fontWeight: '500' },
+  balValue: { color: '#F5F6F9', fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
+  balDivider: { height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,0.10)' },
   formCard: {
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: radius.xl,
@@ -282,6 +326,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.14)',
     padding: space.lg,
   },
+  dirLabel: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: 0.5 },
+  swapBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space.sm },
+  swapText: { color: colors.primary, fontSize: 13, fontWeight: '600' },
   sectionLabel: {
     color: 'rgba(255,255,255,0.50)',
     fontSize: 11,

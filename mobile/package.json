@@ -41,7 +41,8 @@
     "react-native-url-polyfill": "^3.0.0",
     "react-native-web": "^0.21.0",
     "stream-browserify": "^3.0.0",
-    "xrpl": "^4.6.0"
+    "xrpl": "^4.6.0",
+    "@transitx/xrpl-core": "file:../packages/xrpl-core"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",

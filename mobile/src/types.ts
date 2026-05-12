@@ -34,9 +34,11 @@ export type Group = {
 };
 
 export type Quote = {
-  sendMaxUsd: number;
-  rate: number;
-  paths: unknown[];
+  sendMaxUsd: number;     // 결제에 쓰일 SendMax USD (표시용 숫자)
+  rate: number;           // KRW per USD
+  paths: unknown[];       // ripple_path_find 결과 (Payment.Paths 로 그대로)
+  /** xrpl-core 가 채우는 원본 Amount — 결제 실행 시 그대로 전달. mock 모드에선 없음. */
+  _xrpl?: unknown;
 };
 
 export type PayResult = {

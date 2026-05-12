@@ -491,7 +491,7 @@ export const CardListScreen: React.FC = () => {
                 icon={RefreshCw}   bgIcon={Globe}
                 label="환전"      labelColor="#C87000"
                 gradColors={['#FFC040', '#E88000', '#CC5800']}
-                onPress={() => {}}
+                onPress={() => navigation.navigate('Exchange')}
               />
               <PictoBtn
                 icon={Zap}         bgIcon={CreditCard}

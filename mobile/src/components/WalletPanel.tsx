@@ -40,14 +40,14 @@ export const WalletPanel: React.FC = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-      {/* 잔고 hero */}
+      {/* 잔고 hero — 원화 환산 합계가 메인, USD/KRW IOU 잔고가 보조 */}
       <View style={styles.hero}>
-        <Text style={[styles.heroLabel, { color: dyn.textOnLightMuted }]}>원화 잔고</Text>
+        <Text style={[styles.heroLabel, { color: dyn.textOnLightMuted }]}>총 잔고 (원화 환산)</Text>
         <Text style={[styles.heroValue, { color: dyn.textOnLight }]}>
           {formatAmount(wallet.balanceUsd, 'KRW')}
         </Text>
         <Text style={[styles.heroSub, { color: dyn.textOnLightFaint }]}>
-          XRPL Testnet · XRP 실시간 환산
+          {formatAmount(wallet.usd, 'USD')} + {formatAmount(wallet.krw, 'KRW')} · XRPL Testnet
         </Text>
       </View>
 
@@ -87,7 +87,7 @@ export const WalletPanel: React.FC = () => {
       </DarkGlass>
 
       <Text style={[styles.footer, { color: dyn.textOnLightMuted }]}>
-        이 주소로 XRP를 받으면 잔고에 자동으로 추가됩니다. (XRPL Testnet)
+        이 주소로 USD를 받으면 잔고에 추가됩니다. 결제 시 자동으로 현지 통화로 환전됩니다. (XRPL Testnet)
       </Text>
 
       <DepositModal

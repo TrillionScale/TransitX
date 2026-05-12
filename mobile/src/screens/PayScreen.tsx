@@ -246,8 +246,8 @@ const SuccessFooter: React.FC<{
     </View>
     <View style={styles.successDivider} />
     <View style={styles.successRow}>
-      <Text style={styles.successLabel}>환율</Text>
-      <Text style={styles.successValue}>{rate.toFixed(2)}</Text>
+      <Text style={styles.successLabel}>적용 환율</Text>
+      <Text style={styles.successValue}>1 USD = ₩{rate.toFixed(2)}</Text>
     </View>
     <View style={styles.successDivider} />
     <Pressable
