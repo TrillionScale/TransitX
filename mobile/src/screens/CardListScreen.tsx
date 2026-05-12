@@ -315,43 +315,51 @@ export const CardListScreen: React.FC = () => {
             </ScrollView>
             </MaskedView>
 
-            {/* 환율 변환 디스플레이 */}
-            <DarkGlass radius="lg" style={styles.fxCard}>
-              <LinearGradient
-                colors={['rgba(59,127,255,0.12)', 'rgba(94,231,168,0.06)', 'transparent']}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={[StyleSheet.absoluteFill, { borderRadius: radius.lg }]}
-                pointerEvents="none"
-              />
-              <View style={styles.fxRow}>
-                <View style={styles.fxSide}>
-                  <Text style={styles.fxCurrLabel}>USD</Text>
-                  <Text style={styles.fxAmount}>
-                    ${activeBalanceUsd.toFixed(2)}
-                  </Text>
+            {/* 환율 변환 디스플레이 — 탭하면 실제 환전(ExchangeScreen) */}
+            <Pressable
+              onPress={() => navigation.navigate('Exchange')}
+              style={({ pressed }) => pressed && { opacity: 0.85 }}
+            >
+              <DarkGlass radius="lg" style={styles.fxCard}>
+                <LinearGradient
+                  colors={['rgba(59,127,255,0.12)', 'rgba(94,231,168,0.06)', 'transparent']}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={[StyleSheet.absoluteFill, { borderRadius: radius.lg }]}
+                  pointerEvents="none"
+                />
+                <View style={styles.fxRow}>
+                  <View style={styles.fxSide}>
+                    <Text style={styles.fxCurrLabel}>USD</Text>
+                    <Text style={styles.fxAmount}>
+                      ${activeBalanceUsd.toFixed(2)}
+                    </Text>
+                  </View>
+                  <View style={styles.fxArrow}>
+                    <ArrowLeftRight size={18} color={colors.primary} strokeWidth={2} />
+                    <Text style={styles.fxSpeedTag}>0.3s</Text>
+                  </View>
+                  <View style={[styles.fxSide, styles.fxSideRight]}>
+                    <Text style={[styles.fxCurrLabel, { color: selectedCurrData.code === 'USD' ? colors.primary : '#5EE7A8' }]}>
+                      {selectedCcy}
+                    </Text>
+                    <Text style={[styles.fxAmount, { color: '#5EE7A8' }]}>
+                      {activeCard ? fmtConverted(activeBalanceUsd, selectedCurrData) : '--'}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.fxArrow}>
-                  <ArrowLeftRight size={18} color={colors.primary} strokeWidth={2} />
-                  <Text style={styles.fxSpeedTag}>0.3s</Text>
-                </View>
-                <View style={[styles.fxSide, styles.fxSideRight]}>
-                  <Text style={[styles.fxCurrLabel, { color: selectedCurrData.code === 'USD' ? colors.primary : '#5EE7A8' }]}>
-                    {selectedCcy}
+                <View style={styles.fxRateRow}>
+                  <Text style={styles.fxRateText}>
+                    1 USD = {selectedCurrData.perUsd >= 10
+                      ? selectedCurrData.perUsd.toFixed(1)
+                      : selectedCurrData.perUsd.toFixed(3)}{' '}{selectedCcy}
                   </Text>
-                  <Text style={[styles.fxAmount, { color: '#5EE7A8' }]}>
-                    {activeCard ? fmtConverted(activeBalanceUsd, selectedCurrData) : '--'}
-                  </Text>
+                  <View style={styles.fxCtaRow}>
+                    <Text style={styles.fxCtaText}>환전하기</Text>
+                    <ChevronRight size={13} color={colors.primary} strokeWidth={2.4} />
+                  </View>
                 </View>
-              </View>
-              <View style={styles.fxRateRow}>
-                <Text style={styles.fxRateText}>
-                  1 USD = {selectedCurrData.perUsd >= 10
-                    ? selectedCurrData.perUsd.toFixed(1)
-                    : selectedCurrData.perUsd.toFixed(3)}{' '}{selectedCcy}
-                </Text>
-                <Text style={styles.fxRateTime}>실시간 환율</Text>
-              </View>
-            </DarkGlass>
+              </DarkGlass>
+            </Pressable>
 
             {/* 글로벌 커버리지 */}
             <View style={styles.sectionHead}>
@@ -668,6 +676,8 @@ const styles = StyleSheet.create({
   fxRateRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   fxRateText: { color: colors.textOnGlassFaint, fontSize: 11, fontWeight: '500' },
   fxRateTime: { color: '#5EE7A8', fontSize: 10, fontWeight: '600' },
+  fxCtaRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  fxCtaText: { color: colors.primary, fontSize: 11, fontWeight: '700' },
 
   // ── 도시 스크롤 ─────────────────────────────────────────────────
   covBadge: {
